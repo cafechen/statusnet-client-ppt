@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <!-- Sidebar icon tooltips -->
+    <string name="public_img">Public timeline</string>
+    <string name="user_img">Profile</string>
+    <string name="friends_img">Personal timeline</string>
+    <string name="mentions_img">Replies</string>
+    <string name="favorites_img">Favorites</string>
+    <string name="inbox_img">Inbox</string>
+    <string name="allgroups_img">All groups</string>
+    <string name="search_img">Search</string>
+    <string name="settings_img">Settings</string>
+    
+    <!-- Text controls -->
+    <string name="new_notice">New Notice</string>
+
+    <!-- More button -->
+    <string name="more">More</string>
+
+    <!-- New notice dialog -->
+    <string name="new_notice_dialog">New notice</string>
+    <string name="replying_to">Replying to %s</string>
+    <string name="new_direct_message">New Direct Message</string>
+    <string name="new_direct_message_to">New Direct Message to: %s</string>
+    <string name="update_button">update</string>
+    <string name="upload_button">upload</string>
+    <string name="posted_reply_to_notice">Posted reply to notice %s</string>
+    <string name="posted_notice">Posted notice %s</string>
+    <string name="error_posting">Error posting new notice</string>
+    <string name="error_uploading">Error uploading file</string>
+
+    <!-- Timeline -->
+    <string name="empty_timeline">No notices in this timeline yet.</string>
+    <string name="timeline_title_friends">{name} and friends on {site}</string><!-- do not translate the things in braces -->
+    <string name="timeline_title_replies">Replies to {name} on {site}</string>
+    <string name="timeline_title_public">Public timeline on {site}</string>
+    <string name="timeline_title_favorites">{name}'s favorite notices on {site}</string>
+    <string name="timeline_title_tag">Notices tagged #{tag} on {site}</string>
+    <string name="no_more_notices">There are no older notices in this timeline.</string>
+    
+    <!-- Notice controls -->
+    <string name="view_notice">View this notice in browser</string>
+    <string name="from_source">from %s</string>
+    <string name="reply">Reply</string>
+    <string name="fave">Fave</string>
+    <string name="unfave">Unfave</string>
+    <string name="delete">Delete</string>
+    <string name="repeat">Repeat</string>
+
+    <!-- Desktop notifications -->
+    <string name="notify_notice_from">New notice from %s</string>
+
+    <!-- Deletion -->
+    <string name="confirm_delete">Delete notice?</string>
+    <string name="deleted_notice">Deleted notice %s</string>
+    <string name="error_deleting_notice">Error deleting notice %s - %s</string>
+    <string name="error_deleting_notice_status">Error deleting notice: %s - %s</string>
+
+    <!-- Favoriting/unfavoriting -->
+    <string name="faved_notice">Faved notice %s</string>
+    <string name="unfaved_notice">Unfaved notice %s</string>
+
+    <!-- Repeating -->
+    <string name="repeated_notice">Repeated notice %s</string>
+
+    <!-- Subscribe/unsubscring -->
+    <string name="unsubscribed_profile">Unsubscribed from profile %s</string>
+    <string name="subscribed_profile">Subscribed to profile %s</string>
+
+
+    <!-- Profile controls -->
+    <string name="subscribe">Subscribe</string>
+    <string name="unsubscribe">Unsubscribe</string>
+    <string name="block">Block</string>
+    <string name="unblock">Unblock</string>
+    
+    <string name="blocked_profile">Blocked profile %s</string>
+    <string name="unblocked_profile">Unblocked profile %s</string>
+    
+    <!-- Group controls -->
+    <string name="timeline_title_groups">Groups on {site}</string>
+    <string name="name_label">Name</string>
+    <string name="location">Location</string>
+    <string name="bio_label">Bio</string>
+    <string name="homepage">Homepage</string>
+    <string name="members">Members</string>
+    <string name="no_groups">No groups yet.</string>
+
+    <string name="join">Join</string>
+    <string name="leave">Leave</string>
+
+    <!-- Group actions -->
+    <string name="joined_group">Joined group %s</string>
+    <string name="left_group">Left group %s</string>
+
+
+
+    <!-- Settings view -->
+    <string name="accounts_tab_link">Accounts</string>
+    <string name="misc_tab_link">Misc</string>
+    <string name="select_account">Select Account</string>
+    <string name="add-account">Add account...</string>
+    <string name="server_label">Server</string>
+    <string name="server_example">example.status.net</string>
+    <string name="username_label">Username</string>
+    <string name="username_example">username</string>
+    <string name="password_label">Password</string>
+    <string name="password_example">password</string>
+    <string name="new-save">Save</string><!-- #new-save val -->
+    <string name="new-cancel">Cancel</string><!-- #new-cancel val -->
+    <string name="sounds">Sounds</string>
+    <string name="play_sounds">Play sounds</string>
+    <string name="newnotices_sound">Play a sound when new notices arrive</string>
+    <string name="postnotice_sound">Play a sound when posting a notice</string>
+    <string name="notifications">Notifications</string>
+    <string name="show_notifications">Show notifications as new notices arrive</string>
+	<string name="language-legend">Language</string>
+	<string name="language-default">System default: %s</string>
+    <string name="misc-save">Save</string><!-- #misc-save val -->
+
+    <!-- Settings view actions -->
+    <string name="snarl_required"><![CDATA[<b>Note</b>: you must have <a id="snarl-link" href="#" rel="external">Snarl</a> installed for notifications to work. StatusNet Desktop will not function correctly if this is checked and Snarl is not installed.]]></string>
+    <string name="linux_notifications">Note: your desktop environment must have a notifications service for notifications to work.</string>
+    <string name="settings_saved">Settings saved.</string>
+    <string name="settings_failed">Coudn't save settings!</string>
+    <string name="no_accounts">No accounts set up -- time to add one!</string>
+    <string name="delete_account">Delete account</string>
+    <string name="confirm_delete_account">Are you sure you want to delete the account %s on %s ?</string>
+    <string name="testing_login">Testing login...</string>
+    <string name="login_confirmed">Login confirmed.</string>
+    <string name="checking_version">Checking StatusNet version...</string>
+    <string name="min_version">StatusNet must be version 0.9.3 or later!</string>
+    <string name="getting_config">Getting StatusNet configuration...</string>
+    <string name="account_verified">Account verified.</string>
+    <string name="config_failed">Couldn't load site configuration info.</string>
+    <string name="version_failed">Error checking version.</string>
+    <string name="bad_login">Bad nickname or password.</string>
+    <string name="account_failed">Could not verify site.</string>
+    <string name="finding_https">Finding secure server...</string>
+    <string name="finding_http">Finding non-secured server...</string>
+
+	<!-- Common language names -->
+	<string name="language-en">English</string>
+	<string name="language-en-us">English (US)</string>
+	<string name="language-en-gb">English (UK)</string>
+	<string name="language-de">German</string>
+	<string name="language-es">Spanish</string>
+	<string name="language-fr">French</string>
+
+</resources>

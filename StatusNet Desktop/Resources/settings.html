@@ -1,0 +1,109 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html>
+    <head>
+        <link id="base" rel="stylesheet" href="theme/base.css" type="text/css" charset="utf-8">
+        <link id="display" rel="stylesheet" href="theme/startup/css/display.css" type="text/css" charset="utf-8">
+        <link id="settings" rel="stylesheet" href="theme/startup/css/settings.css" type="text/css" charset="utf-8">
+        <script type="text/javascript" src="lib/jquery-1.4.4.min.js"></script>
+        <script type="text/javascript" src="lib/jquery.hotkeys.js"></script>
+        <script type="text/javascript" src="lib/LAB.min.js"></script>
+        <script type="text/javascript" src="settings.js"></script>
+        <title>Settings</title>
+    </head>
+    <body>
+
+      <ul class="tabs">
+          <li><a id="accounts_tab_link" href="#accounts_tab">Accounts</a></li>
+          <li><a id="misc_tab_link" href="#misc_tab">Misc</a></li>
+      </ul>
+
+      <div class="tab_container">
+        <div id="accounts_tab" class="tab_content">
+
+          <div id="settings_content">
+
+        <h1 id="select_account"></h1>
+
+              <div id="status"></div>
+
+          <div id="accountlist-holder">
+              <table id="accountlist">
+                  <tbody></tbody>
+                  <tfoot>
+                      <tr class="add bottom">
+                          <td colspan="3">
+                              <a href="#" id="add-account"></a>
+                          </td>
+                          <td class="add"><a href="#"></a></td>
+                      </tr>
+                  </tfoot>
+              </table>
+          </div>
+
+              <div id="new-account">
+                  <fieldset>
+                      <table>
+                        <tr>
+                            <td rowspan="3" class="avatar">
+                                <img id="new-avatar" src="theme/default/images/default-avatar-stream.png" name="new-avatar">
+                            </td>
+                            <td>
+                                <span id="server_label"></span>
+                                <p>
+                                    <label id="server_example" for="new-site"></label>
+                                    <input id="new-site" type="text" name="new-site" value="">
+                                </p>
+                                <span id="username_label"></span>
+                                <p>
+                                    <label id="username_example" for="new-username"></label>
+                                    <input id="new-username" type="text" name="new-username" value="">
+                                </p>
+                                <span id="password_label"></span>
+                                <p>
+                                    <label id="password_example" for="new-password"></label>
+                                    <input id="new-password" type="password" name="new-password" value="">
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div id="new-status"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input id="new-save" type="submit"> <input id="new-cancel" type="button">
+                            </td>
+                        </tr>
+                    </table>
+
+                  </fieldset>
+              </div>
+          </div>
+        </div>
+        <div id="misc_tab" class="tab_content">
+          <fieldset>
+            <legend id="sounds"></legend>
+            <input type="checkbox" name="play_sounds_cbox"  id="play_sounds_cbox" value="newnotices_sound"/> <label for="play_sounds_cbox" id="play_sounds"></label><br/>
+            <input type="checkbox" name="newnotices_sound_cbox"  id="newnotices_sound_cbox" value="newnotices_sound"/> <label for="newnotices_sound_cbox" id="newnotices_sound"></label><br/>
+            <input type="checkbox" name="postnotice_sound_cbox"  id="postnotice_sound_cbox" value="newnotices_sound"/> <label for="postnotice_sound_cbox" id="postnotice_sound"></label><br/>
+          </fieldset>
+          <fieldset>
+            <legend id="notifications"></legend>
+            <input type="checkbox" name="notifications_cbox"  id="notifications_cbox" value="notifications"/> <label for="notifications_cbox" id="show_notifications"></label><br/>
+            <div id="notifications_note"></div>
+          </fieldset>
+		  <fieldset>
+		    <legend id="language-legend"></legend>
+			<select id="language">
+				<option id="language-default" value=""></option>
+			</select>
+		  </fieldset>
+          <div class="settings_controls">
+            <input id="misc-save" type="submit"/>
+          </div>
+        </div>
+      </div>
+
+    </body>
+</html>

@@ -1,0 +1,432 @@
+html, body {
+	height: 100%;
+	-webkit-user-select: auto;
+}
+
+body, * {
+    font-family:"Lucida Grande",Tahoma, Helvetica, sans-serif;
+    font-size: 16px;
+	margin:0;
+	padding:0;
+
+}
+
+body {
+	margin: 0px;
+	color: #000;
+	background: #c6c8cc url(../images/page_bg.png);
+}
+
+a {
+	color: #3e3e8c;
+	outline: none;
+}
+
+.rounded {
+	-webkit-border-radius:10px;
+}
+
+#profile {
+	padding-top:10px;
+	margin-bottom:10px;
+	background-color:#d2d2d2;
+	-webkit-border-top-left-radius:10px;
+	-webkit-border-bottom-left-radius:10px;
+}
+
+h1 {
+	font-size: 1.2em;
+	letter-spacing: 0.2em;
+	line-height: 1.1em;
+	color: #fff;
+	background: #444;
+	text-shadow: 0px 1px 0px #000;
+	margin: 5px -4px 10px 0px;
+	padding: 4px 30px 2px 4px;
+	border: 1px solid #000;
+	border-color: transparent;
+	-webkit-border-top-left-radius: 10px;
+	-webkit-box-shadow: 2px 2px 2px #000;
+	opacity: 0.75;
+	font-weight: normal;
+}
+
+#wrapper {
+    /* Warning: Mess with iScroll wrapper settings at your own peril */
+    position:absolute; z-index:1;
+    top:0; bottom:0; left:0;
+    overflow:auto;
+    width:100%;
+    /* I can't make this stripy background look good! Wah! -Zach*/
+    background: #c6c8cc url(../images/page_bg.png);
+}
+
+#scroller {
+    /* Warning: Mess with iScroll scroller div settings at your own peril */
+    position:absolute; z-index:1;
+    -webkit-tap-highlight-color:rgba(0,0,0,0);
+    width:100%;
+    padding:0;
+}
+
+#notices {
+	clear: both;
+	margin: 0px 5px 5px 5px;
+    padding: 2px 0px 5px 0px;
+    background: #fff;
+    -webkit-border-radius: 6px;
+}
+
+.notice {
+    padding: 8px;
+	color: #000;
+    border-bottom: 2px dotted #ccc;
+    overflow-x: hidden;
+}
+
+.notice[class~=foldout] {
+	-webkit-box-shadow: 2px 2px 2px #888;
+    border-bottom: none;
+    overflow-x: visible;
+}
+
+.notice .avatar {
+	float:right;
+	margin:5px 0 5px 10px;
+}
+
+.notice-self .avatar {
+	float:left;
+	margin:5px 10px 5px 0;
+}
+
+.notice .avatar img {
+	width: 64px;
+	height: 64px;
+	-webkit-border-radius: 3px;
+	-webkit-box-shadow: 0px 0px 3px gray;
+	background-color:#f8f8f8;
+}
+
+.notice .author {
+	font-size:18px;
+	color:#000;
+	text-decoration:none;
+	font-weight: normal;
+}
+
+.notice .date_link {
+	float: right;
+	margin-top: 5px;
+}
+
+.notice .context_link, .notice .notice_source {
+	float: left;
+	margin-left: 4px;
+}
+
+.notice .notice_source .notice_source_inner {
+	font-size: 0.8em;
+}
+
+.notice .date_link, .notice .context_link {
+	font-size: 0.8em;
+}
+.notice .date_link a, .notice .context_link a {
+	text-decoration: none;
+}
+
+.notice .context_link a {
+	font-size: 1em;
+}
+
+.notice .notice_source a {
+	font-size: 1em;
+	text-decoration: none;
+}
+
+.notice .context_link a:before {
+	content: "(";
+}
+
+.notice .context_link a:after {
+	content: ")";
+}
+
+.notice .content {
+	margin-top: 3px;
+	margin-bottom: 6px;
+}
+
+.notice .clear {
+	clear:both;
+}
+
+a#new_notice {
+	padding: 2px 5px 2px 5px;
+	background: #444;
+	color: #fff;
+	font-size: 0.95em;
+	text-decoration: none;
+	border: 1px transparent;
+	-webkit-border-radius: 6px;
+	text-shadow: 0px 1px 0px #000;
+	-webkit-box-shadow: 1px 1px 1px #ccc;
+}
+
+a#new_notice:hover {
+	background: #b3b3b3;
+	color: #000;
+	text-shadow: 0px 1px 0px #ccc;
+	-webkit-box-shadow: 1px 1px 1px #000;
+}
+
+.notice_links {
+	clear: both;
+	margin-bottom: 2px;
+}
+.notice_links .links {
+    display: none;
+    padding-top: 8px;
+}
+
+.notice_links div {
+    display: block; /* wtf? */
+}
+
+.notice_links button {
+	width: auto;
+	text-align: center;
+	padding: 4px 8px;
+	margin: 10px 5px 5px 5px;
+	color: #fff;
+	font-size: 0.95em;
+	text-decoration: none;
+	-webkit-border-radius: 6px;
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ff9d63), color-stop(100%,#FB6104));
+    text-shadow: 0px -1px 0px rgba(0, 0, 0, 0.2);
+    border: 1px solid #d7621c;
+}
+
+#empty_timeline {
+	margin: 0px;
+    padding: 5px;
+	font-size: 1.2em;
+}
+
+#profile_panel {
+	position: relative;
+	margin: 0px 0px 5px 0px;
+	padding: 10px 5px 5px 5px;
+	height: auto;
+}
+
+#notices #profile_panel {
+	padding: 5px 0px 5px 0px;
+	margin-bottom: 10px;
+	border-bottom: 1px dotted #ccc;
+}
+
+#profile_panel img {
+	float: left;
+	border: 1px transparent;
+	-webkit-border-radius: 6px;
+	margin-right: 10px;
+	margin-bottom: 4px;
+}
+
+#profile_panel h2 {
+	padding-top: 4px;
+	margin-bottom: 4px;
+	font-size: 1.1em;
+	line-height: 1.1em;
+	font-weight: normal;
+}
+
+#notices #profile_panel h2 {
+	font-size: 1.1em;
+	padding-top: 1px;
+	margin-bottom: 2px;
+}
+
+#profile_panel dl.profile_list dt {
+	display: none;
+}
+
+#profile_panel dl.profile_list dd.name {
+	font-weight: bold;
+	padding-bottom: 2px;
+}
+
+#profile_panel dl.profile_list dt.id {
+	display: block;
+	float: left;
+	font-size: 0.8em;
+	padding-right: 4px;
+}
+
+#profile_panel dl.profile_list dt.id:after {
+	content: ":";
+}
+
+#profile_panel dl.profile_list dd.id {
+	font-size: 0.8em;
+}
+
+#profile_panel dl.profile_list dd.location {
+	font-style: italic;
+	font-size: 0.8em;
+}
+
+#profile_panel dl.profile_list dd.bio {
+	margin-top: 4px;
+	font-size: 0.8em;
+	margin-bottom: 6px;
+}
+
+#notices #profile_panel dl.profile_list {
+	min-height: 58px;
+}
+
+#profile_panel dl.profile_statistics {
+	clear: left;
+	margin: 0px;
+	line-height: 1.2em;
+	height: 40px;
+}
+
+#profile_panel dl.profile_statistics dt {
+	float: left;
+	margin-left: 0px;
+	color: #444;
+	font-size: 0.8em;
+	width: 30%;
+}
+
+#profile_panel dl.profile_statistics dt a {
+	font-size: 1em;
+}
+
+#profile_panel dl.profile_statistics dd {
+	float: left;
+	margin-left: 0px;
+	font-size: 0.8em;
+	width: 20%;
+}
+
+#profile_panel #profile_action_links {
+	float: right;
+}
+
+#profile_panel #profile_action_links a {
+	clear: right;
+	float: right;
+	width: 100px;
+	text-align: center;
+	padding: 2px 0px 2px 0px;
+	margin-bottom: 10px;
+	color: #fff;
+	font-size: 0.95em;
+	text-decoration: none;
+	-webkit-border-radius: 6px;
+	/* What's this? OMG */
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ff9d63), color-stop(100%,#FB6104));
+    text-shadow: 0px -1px 0px rgba(0, 0, 0, 0.2);
+    border: 1px solid #d7621c;
+}
+
+#notices #profile_panel #profile_action_links a {
+	margin-bottom: 8px;
+}
+
+#profile_panel #profile_action_links a:hover {
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#FB6104), color-stop(100%,#fc8035));
+    text-shadow: 0px -1px 0px rgba(0, 0, 0, 0.4);
+}
+
+#search-box {
+	margin: 15px 0px 0px 10px;
+}
+
+#search-box #search {
+	background: #f2f2f2;
+	border: 2px inset #fff;
+	-webkit-border-radius: 4px;
+	margin-left: 6px;
+	padding: 1px;
+}
+
+.spinner {
+    position: absolute;
+    left: 148px;
+    top: 148px;
+}
+
+/**
+ *
+ * Styles specific to the pull down/up element
+ *
+ */
+.iScrollPullDown,
+.iScrollPullUp {
+    background: none;
+    border-bottom: none;
+    width: 220px;
+    margin: auto;
+    height: 40px;
+    line-height: 40px;
+    padding:5px 10px;
+    font-size:14px;
+    color: #fa6004;
+    font-weight:bold;
+    -webkit-transform:translate3d(0,0,0);   /* Put the element in the HW accelerated layer */
+}
+
+.iScrollPullDownIcon,
+.iScrollPullUpIcon {
+    display:block; float:left;
+    width:20px; height:40px;
+    background:url(../images/iscroll-arrow.png) 0 0 no-repeat;
+    background-size:20px 40px;
+    margin-right:15px;
+    -webkit-transition-property:-webkit-transform;
+    -webkit-transition-duration:250ms;
+    -webkit-transform:rotate(0);
+}
+
+.iScrollPullDown.flip .iScrollPullDownIcon {
+    -webkit-transform:rotate(-180deg);
+}
+
+.iScrollPullDown.loading .iScrollPullDownIcon,
+.iScrollPullUp.loading .iScrollPullUpIcon {
+    background:url(../images/iscroll-loader.gif) 0 0 no-repeat;
+}
+
+.iScrollPullUpIcon {
+    -webkit-transform:rotate(-180deg);
+}
+
+.iScrollPullUp.flip .iScrollPullUpIcon {
+    -webkit-transform:rotate(0);
+}
+
+/*
+@-webkit-keyframes loading {
+    from { -webkit-transform:rotate(0deg); }
+    to { -webkit-transform:rotate(360deg); }
+}
+*/
+
+@media screen and (-webkit-min-device-pixel-ratio:2) {
+    .iScrollPullDownIcon {
+    .iScrollPullUpIcon {
+        background-image:url(../images/iscroll-arrow@2x.png);
+    }
+
+  .iScrollPullDown.loading .iScrollPullDownIcon {
+    .iScrollPullDown.loading .iScrollPullUpIcon {
+        background-image:url(../images/iscroll-loader@2x.gif);
+    }
+
+}

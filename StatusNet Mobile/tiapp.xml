@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ti:app xmlns:ti="http://ti.appcelerator.org">
+    <sdk-version>2.0.1.GA2</sdk-version>
+    <deployment-targets>
+        <target device="mobileweb">true</target>
+        <target device="blackberry">false</target>
+        <target device="iphone">true</target>
+        <target device="ipad">true</target>
+        <target device="android">true</target>
+    </deployment-targets>
+    <id>net.status.client.mobile</id>
+    <name>StatusNet Mobile</name>
+    <version>1.0.7</version>
+    <publisher>StatusNet, Inc.</publisher>
+    <url>http://status.net/</url>
+    <description>StatusNet Mobile Client</description>
+    <copyright>2011 StatusNet, Inc.</copyright>
+    <icon>appicon@2x.png</icon>
+    <persistent-wifi>false</persistent-wifi>
+    <prerendered-icon>false</prerendered-icon>
+    <statusbar-style>default</statusbar-style>
+    <statusbar-hidden>false</statusbar-hidden>
+    <guid>cca143fb-473f-4e8c-9bcb-91b02a08e548</guid>
+    <analytics>false</analytics>
+    <android xmlns:android="http://schemas.android.com/apk/res/android">
+        <!-- Custom Android manifest stuff -->
+        <!-- http://developer.appcelerator.com/doc/mobile/android-custom-androidmanifest -->
+        <!-- Bump the version up from last release -->
+        <manifest android:versionCode="3" android:versionName="1.0.4">
+            <!-- Default disables small-screen support; let's be nice. -->
+            <supports-screens android:anyDensity="false"
+                android:largeScreens="true" android:normalScreens="true" android:smallScreens="true"/>
+            <!-- Shorten the label... -->
+            <application android:label="StatusNet"/>
+        </manifest>
+        <activities>
+            <!-- Accept text and images sent from other apps -->
+            <activity url="share_activity.js">
+                <intent-filter>
+                    <action android:name="android.intent.action.SEND"/>
+                    <category android:name="android.intent.category.DEFAULT"/>
+                    <data android:mimeType="text/plain"/>
+                </intent-filter>
+            </activity>
+        </activities>
+    </android>
+</ti:app>

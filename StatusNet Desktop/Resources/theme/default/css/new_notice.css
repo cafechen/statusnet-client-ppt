@@ -1,0 +1,90 @@
+body {
+	height: 94%;
+}
+
+#notice_input, #form_notice {
+	height: 100%;
+	width: 100%;
+}
+
+#counter {
+	position: absolute;
+	top: 62%;
+	right: 4%;
+	width: 50px;
+	text-align: right;
+	color: #444;
+}
+
+div#counter.negative {
+	color:red;
+}
+
+#buttons {
+	position: absolute;
+	bottom: 6%;
+	right: 2%;
+	text-align:right;
+}
+
+#update_button, #upload_button {
+	display:inline;
+	font-size: 0.95em;
+	width: 60px;
+	text-align: center;
+	padding: 1px 0px 1px 0px;
+	color: #fff;
+	-webkit-border-radius: 6px;
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ff9d63), color-stop(100%,#FB6104)); 
+    text-shadow: 0px -1px 0px rgba(0, 0, 0, 0.2);
+    border: 1px solid #d7621c;
+}
+
+#upload_button:hover, #update_button:hover {
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#FB6104), color-stop(100%,#fc8035));
+    text-shadow: 0px -1px 0px rgba(0, 0, 0, 0.6);
+}
+
+#upload_progress {
+	display:none;
+	position:absolute;
+	left:    5px;
+	bottom:  5px;
+	width:  16px;
+	height: 16px;
+	background-image: url('../images/loading.gif');
+}
+
+#upload_progress.active {
+	display:block;
+	-webkit-animation-name: spin;
+	-webkit-animation-duration: 2s;
+	-webkit-animation-iteration-count: infinite;
+}
+
+@-webkit-keyframes spin {
+	0% {
+		transform:rotate(0deg);
+	}
+	50% {
+		transform:rotate(180deg);
+	}
+}
+
+#textarea_wrapper {
+	margin: 8px;
+	padding: 1%;
+	height: 64%;
+	width: 94%;
+    background: #fff;
+    border: 1px solid #a6a6a6;
+    -webkit-border-radius: 6px;
+    -webkit-box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.2);
+}
+
+#notice_textarea {
+	height: 84%;
+	width: 100%;
+    border: none;
+    outline: none;
+}

@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Timeline</title>
+<link rel="stylesheet" type="text/css" href="css/display.css">
+</head>
+
+<body>
+<div id="wrapper">
+ <div id="scroller">
+ <div id="header"></div>
+ <div id="notices">
+ </div>
+</div>
+</div>
+<div id="footer"></div>
+<script src="binding.js" type="text/javascript"></script><!-- hack for initialization bug on Android -->
+<script src="lib/jquery-1.4.4.min.js" type="text/javascript"></script>
+<script src="lib/humane.js" type="text/javascript"></script>
+<script src="lib/iscroll-min.js" type="application/javascript"></script>
+
+<script type="text/javascript">
+
+if (typeof Titanium == "undefined") {
+    document.write('Titanium is undefined. Nothing will work in this webview.');
+}
+
+var myScroll;
+var loadingMore = false;
+var account = {};
+var lastClickTime = Date.now();
+var activeNotice = null;
+var notices = [];
+var waiting = false;
+
+// We'll let iScroll handle the scrolling
+document.addEventListener('touchmove', function (e) { e.preventDefault(); }, false);
+
+// App-wide event registration, whee!
+Titanium.App.addEventListener("StatusNet_setTimeline", function(event) {
+
+    setTimeout(function () {
+        initScroll();
+    }, 100);
+
+    notices = [];
+    activeNotice = null;
+    account = objectOrJson(event.account);
+    $('#header').empty();
+    $("#notices").empty();
+
+    if (myScroll) {
+        myScroll.scrollTo(0, 0, 0);
+    }
+
+});
+
+// str manip stolen from humane.js
+function strtotime(date_str) {
+	var time = ('' + date_str).replace(/-/g,"/").replace(/[TZ]/g," ");
+	//Titanium.API.debug('date string... ' + date_str + ' -> ' + time + ' -> ' + (new Date(time).getTime()));
+	return new Date(time).getTime();
+}
+
+/**
+ * Find the next-newer notice in our timeline after the given one, if any
+ *
+ * @param notice
+ * @return mixed Notice or null
+ */
+function findNextNewerNotice(notice) {
+    var candidate = null, candidateTS = null;
+    var targetTS = strtotime(notice.updated);
+    for (var i = 0; i < notices.length; i++) {
+        var thisTS = strtotime(notices[i].updated);
+        if (thisTS <= targetTS) {
+            continue;
+        }
+        if (candidate && thisTS > candidateTS) {
+            continue;
+        }
+        candidate = notices[i];
+        candidateTS = thisTS;
+    }
+    return candidate;
+}
+
+function gotNotice(id) {
+    for (var i = 0; i < notices.length; i++) {
+        if (notices[i].id == id) {
+            Titanium.API.error("Ignoring display of already-shown notice id " + id);
+            return true;
+        }
+    }
+    return false;
+}
+
+var insertNoticeHandler = function(event) {
+    var notice = objectOrJson(event.notice);
+    if (!gotNotice(notice.id)) {
+        var html = renderNotice(notice);
+        var next = findNextNewerNotice(notice);
+        if (next) {
+            $(html).insertAfter("#notice-" + next.id);
+        } else {
+            $("#notices").prepend(html);
+        }
+        notices.push(notice);
+        enableNoticeControls(document.getElementById('notice-' + notice.id));
+        scrollContentChanged();
+    }
+};
+
+Titanium.App.addEventListener("StatusNet_prependTimelineNotice", insertNoticeHandler);
+Titanium.App.addEventListener("StatusNet_appendTimelineNotice", insertNoticeHandler);
+
+Titanium.App.addEventListener("StatusNet_appendUserTimelineNotice", function(event) {
+    var notice = objectOrJson(event.notice);
+    var user = objectOrJson(event.user);
+    $("#notices").append(renderNotice(notice, user));
+    enableNoticeControls(document.getElementById('notice-' + notice.id));
+    scrollContentChanged();
+});
+Titanium.App.addEventListener("StatusNet_faveNoticeComplete", function(event) {
+    $('#notice-' + event.noticeId).find('button.notice_fave').
+        removeClass('notice_fave').
+        addClass('notice_unfave').
+        text('Unfave');
+    scrollContentChanged();
+});
+Titanium.App.addEventListener("StatusNet_unFaveNoticeComplete", function(event) {
+    $('#notice-' + event.noticeId).find('button.notice_unfave').
+        removeClass('notice_unfave').
+        addClass('notice_fave').
+        text('Fave');
+    scrollContentChanged();
+});
+Titanium.App.addEventListener("StatusNet_deleteNoticeComplete", function(event) {
+    $('#notices div.notice#notice-' + event.noticeId).fadeOut("slow");
+    scrollContentChanged();
+});
+Titanium.App.addEventListener("StatusNet_showProfile", function(event) {
+    var user = objectOrJson(event.user);
+    var extended = objectOrJson(event.extended);
+    showProfileHeader(user, extended, event.authorId, event.acctUsername);
+    setTimeout(function () {
+        initScroll($('#notices').height() > $('#wrapper').height());
+    }, 100);
+});
+Titanium.App.addEventListener("StatusNet_unsubscribeComplete", function(event) {
+    Titanium.API.debug("webview got event: " + JSON.stringify(event));
+    $('a.profile_unsubscribe').text('Subscribe').addClass('profile_subscribe').removeAttr('disabled').removeClass('profile_unsubscribe');
+    scrollContentChanged();
+});
+Titanium.App.addEventListener("StatusNet_subscribeComplete", function(event) {
+    Titanium.API.debug("webview got event: " + JSON.stringify(event));
+    $('a.profile_subscribe').text('Unsubscribe').addClass('profile_unsubscribe').removeAttr('disabled').removeClass('profile_subscribe');
+    scrollContentChanged();
+});
+Titanium.App.addEventListener("StatusNet_blockComplete", function(event) {
+    Titanium.API.debug("webview got event: " + JSON.stringify(event));
+    $('a.profile_block').text('Unblock').addClass('profile_unblock').removeAttr('disabled').removeClass('profile_block');
+    scrollContentChanged();
+});
+Titanium.App.addEventListener("StatusNet_unblockComplete", function(event) {
+    Titanium.API.debug("webview got event: " + JSON.stringify(event));
+    $('a.profile_unblock').text('Block').addClass('profile_block').removeAttr('disabled').removeClass('profile_unblock');
+    scrollContentChanged();
+});
+Titanium.App.addEventListener("StatusNet_showEmptyTimelineMsg", function(event) {
+    Titanium.API.debug("webview got event: " + JSON.stringify(event));
+    showEmptyTimeline();
+});
+Titanium.App.addEventListener("StatusNet_appendDirectMessage", function(event) {
+    var dm = objectOrJson(event.dm);
+    $("#notices").append(renderDirectMessage(dm));
+    enableDirectMessageControls(dm);
+    scrollContentChanged();
+});
+// Update relative timestamps when resuming app from sleep
+Titanium.App.addEventListener("resume", function(event) {
+    Titanium.API.debug("webview got event: " + JSON.stringify(event));
+    for (var i = 0; i < notices.length; i++) {
+        var notice = notices[i];
+        $('#notice-' + notice.id + ' .date_link').text(humane_date(notice.updated));
+    }
+    scrollContentChanged();
+});
+
+Titanium.App.addEventListener("StatusNet_timelineFinishedUpdate", function(event) {
+    Titanium.API.debug("webview got event: "+ JSON.stringify(event));
+    waiting = false;
+    if (loadingMore && myScroll) {
+         setTimeout(function() {
+                myScroll.refresh();
+            }, 0);
+        loadingMore = false;
+        return;
+    }
+
+    setTimeout(function () {
+        initScroll($('#notices').height() > $('#wrapper').height());
+    }, 100);
+});
+
+Titanium.App.addEventListener("StatusNet_orientationChange", function(event) {
+    Titanium.API.debug('Orientation change!');
+    scrollContentChanged();
+});
+
+// Wrap this in a setTimeout
+function initScroll(pullUp) {
+
+    if (myScroll) {
+        myScroll.destroy();
+        myScroll = null;
+    }
+
+    // Craziness to have the spinner keep on spinning until
+    // we're done receiving all new timeline data
+    function waitForData() {
+        waiting = true; // yucky global
+        var wait1 = setTimeout(function () {
+            var wait2 = setInterval(function() {
+                // waiting gets updated by StatusNet_timelineFinishedUpdate handler
+                if (waiting === false) {
+                    clearInterval(wait2);
+                    clearTimeout(wait1);
+                }
+            }, 10); // check for timeline update to be finished every 10ms
+        }, 10000); // wait as long as 10 secs
+        waiting = false;
+    }
+
+    var scrollProps = {
+        pullToRefresh: 'down',
+        bounce: false,
+        pullDownLabel: ['Pull down to refresh...', 'Release to refresh...', 'Loading...'],
+        pullUpLabel: ['Pull up to load more...', 'Release for more...', 'Loading...'],
+
+        onPullDown: function () {
+            Titanium.App.fireEvent("StatusNet_timelineRefresh", {
+                gar: "gar"
+            });
+            waitForData();
+        }
+    };
+
+    if (pullUp) {
+        scrollProps.pullToRefresh = 'both';
+        scrollProps.onPullUp = function() {
+            loadingMore = true;
+            Titanium.App.fireEvent("StatusNet_timelineLoadMore", {
+                gar: "gar"
+            });
+            waitForData();
+        };
+    }
+
+    setTimeout(function () {
+        myScroll = new iScroll('wrapper', scrollProps);
+    }, 100); // Don't muck with this, required by library
+};
+
+function scrollContentChanged() {
+    if (myScroll) {
+        setTimeout(function() {
+            myScroll.refresh();
+        }, 0);
+    }
+}
+
+// Default handling for link click events; we'll pass external links on to the app
+// for opening in a separate browser window.
+$(document).delegate("a", "click", function(event) {
+    if (this.href.substr(0, 4) == 'app:') {
+        Titanium.API.info('Got a delegated click event for internal app link: ' + this.href);
+    } else {
+        Titanium.App.fireEvent("StatusNet_externalLink", {url: this.href});
+        return false; // don't load the link in the webview.
+    }
+});
+
+Titanium.App.fireEvent("StatusNet_timelineReady", {hey: "foo"});
+Titanium.API.info("YAY - WebView is set up and waiting.");
+
+function objectOrJson(obj) {
+    if (typeof obj == "string") {
+        // On Android, objects get passed to us as JSON. Srsly?
+        return eval('(' + obj + ')');
+    } else {
+        return obj;
+    }
+}
+
+
+/**
+ * Put together the HTML for a single notice
+ *
+ * @param object notice the notice
+ * @return string HTML
+ */
+renderNotice = function(notice, user) {
+
+    var html = [];
+    var avatar;
+    var author;
+    var authorId;
+    var authorUri;
+
+    // If a user is provided this is a user timeline
+    if (user) {
+        avatar = user.avatarMedium;
+        author = user.username;
+        authorId = user.id;
+        authorUri = user.link;
+    } else {
+        avatar = notice.avatar;
+        author = notice.author;
+        authorId = notice.authorId;
+        authorUri = notice.authorUri;
+    }
+    var isSelf = author == account.username && isLocalAuthor(authorUri);
+
+    var classes = ['notice'];
+
+    if (notice.favorite === "true") {
+        classes.push('notice-favorite');
+    }
+
+    if (notice.repeated === "true") {
+        classes.push('notice-repeated');
+    }
+
+    if (notice.repeat_of) {
+        classes.push('notice-repeat');
+    }
+
+    if (isSelf) {
+        classes.push('notice-self');
+    }
+
+    html.push('<div class="' + classes.join(" ") + '" id="notice-' + notice.id +'" name="notice-' + notice.id +'">');
+    if (!user) {
+        var avdiv = $('<div><div class="avatar"><a rel="external"><img></a></div></div>').
+            find('a').attr('href', notice.authorUri).end().
+            find('img').attr('src', avatar).attr('title', author).end();
+        html.push(avdiv.html());
+    }
+    html.push('<div>');
+    html.push('<div class="date_link">' + humane_date(notice.updated) + '</div>');
+    html.push('<a class="author" name="author-' + authorId + '" href="' + authorUri + '" rel="external">' + author + '</a>');
+    html.push('<div class="content">'+ notice.content +'</div>');
+    html.push('</div>');
+
+    html.push('<div class="notice_links">');
+    html.push('<div class="links">');
+
+    html.push('<div>');
+    if (notice.source) {
+        html.push('<div class="notice_source"><span class="notice_source_inner">from ' + notice.source + '</span></div>');
+    }
+    if (notice.contextLink && notice.inReplyToLink) {
+        html.push(
+            '<div class="context_link"><a rel="external" title="View this conversation in browser" href="'
+            + notice.contextLink +'">in context</a></div>'
+        );
+    }
+    html.push('</div>');
+
+    html.push('<br>');
+    html.push('<div>');
+    html.push('<button class="notice_reply">Reply</button>');
+
+    if (notice.favorite === "true") {
+        html.push(' <button class="notice_unfave">Unfave</button>');
+    } else {
+        html.push(' <button class="notice_fave">Fave</button>')
+    }
+
+    if (isSelf) {
+        html.push(' <button class="notice_delete">Delete</a>')
+    } else {
+        if (notice.repeated === "false") {
+            html.push(' <button class="notice_repeat">Repeat</button>');
+        }
+    }
+    html.push(' <button class="notice_share">Share</button>');
+
+    html.push('<div>');
+    html.push('</div></div></div>');
+    html.push('<div class="clear"></div>');
+
+    return html.join('');
+}
+
+
+enableNoticeControls = function(noticeDom) {
+
+    var $notice = $(noticeDom);
+    var name = $notice.attr('name');
+    if (!name) {
+        Titanium.API.debug('ARGH! got bogus name in enableNoticeControls');
+        return false;
+    }
+    var noticeId = name.substring(7); // notice-
+
+    name = $notice.find('a.author').attr('name');
+    var authorId = name.substring(7); // author-
+
+    var noticeAuthor = $notice.find('a.author').text();
+
+    Titanium.API.debug("authorId = " + authorId + " author name = " + noticeAuthor + " noticeId = " + noticeId);
+
+    var uri = $notice.find('div a.author').attr('href');
+
+    // Override links to external web view of the notice timelines
+    // with click event handlers to display timelines within the client
+    if (isLocalAuthor(uri)) {
+
+        //$notice.find('div a.author').attr('href', "#");
+        $notice.find('div a.author').bind('click', function(event) {
+            Titanium.App.fireEvent("StatusNet_switchUserTimeline", {authorId: authorId});
+            return false;
+        });
+
+        //$notice.find('div.avatar a').attr('href', "#");
+        $notice.find('div.avatar').bind('click', function(event) {
+            Titanium.App.fireEvent("StatusNet_switchUserTimeline", {authorId: authorId});
+            return false;
+        });
+    }
+
+
+    // Note -- using delegate rather than bind so that buttons that change
+    // state will continue to work with their new classes.
+    $notice.delegate('button.notice_reply', 'click', function(event) {
+        Titanium.App.fireEvent("StatusNet_replyToNotice", {noticeId: noticeId, noticeAuthor: noticeAuthor});
+        return false;
+    });
+
+    $notice.delegate('button.notice_fave', 'click', function(event) {
+        Titanium.App.fireEvent("StatusNet_faveNotice", {noticeId: noticeId});
+        return false;
+    });
+
+    $notice.delegate('button.notice_unfave', 'click', function(event) {
+        Titanium.App.fireEvent("StatusNet_unfaveNotice", {noticeId: noticeId});
+        return false;
+    });
+
+    $notice.delegate('button.notice_repeat', 'click', function(event) {
+        Titanium.App.fireEvent("StatusNet_repeatNotice", {noticeId: noticeId});
+        return false;
+    });
+
+    $notice.delegate('button.notice_delete', 'click', function(event) {
+        Titanium.App.fireEvent("StatusNet_deleteNotice", {noticeId: noticeId});
+        return false;
+    });
+
+    $notice.delegate('button.notice_share', 'click', function(event) {
+        Titanium.App.fireEvent("StatusNet_shareNotice", {noticeId: noticeId});
+        return false;
+    });
+
+    // Override external web links to local users in-content
+    $notice.find('div.content span.vcard a').each(function() {
+        var href = $(this).attr('href');
+        if (isLocalAuthor(href)) {
+            //$(this).attr('href', '#');
+            $(this).click(function() {
+                var idRegexp = /(\d)+$/;
+                result = href.match(idRegexp);
+                if (result) {
+                    Titanium.App.fireEvent("StatusNet_switchUserTimeline", {authorId: result[0]});
+                    return false;
+                }
+            });
+        }
+    });
+
+    var clicks = 0;
+
+    $notice.bind('click', function(event) {
+
+        var that = this;
+        var originalHeight = $notice.height();
+
+        // delay hack to prevent double event delivery from breaking
+        var minSelfClickDelay = 100;
+        var delay = Date.now() - lastClickTime;
+
+        if (delay < minSelfClickDelay ) {
+          return;
+        }
+
+        clicks++;
+
+        // Trick to detect double clicks (can't use dblclick or doubletouch events because
+        // the notice element also has single clicky children)
+        if (clicks > 0) {
+            setTimeout(function() {
+                if (clicks > 1) {
+                    if (activeNotice) {
+                        $(activeNotice).removeClass('foldout');
+                        $(activeNotice).find('.links').hide();
+                        var scrollDistance = $notice.height() - originalHeight;
+                        if (myScroll) {
+                            myScroll.scrollTo(0, scrollDistance, 200, true);
+                        }
+                    }
+                    if (that === activeNotice) {
+                        activeNotice = null;
+                    } else {
+                        $notice.addClass('foldout');
+                        $notice.find('.links').show();
+                        activeNotice = noticeDom;
+                        var scrollDistance = $notice.height() - originalHeight;
+                        if (myScroll) {
+                            myScroll.scrollTo(0, scrollDistance, 200, true);
+                        }
+                    }
+                    lastClickTime = Date.now();
+                    scrollContentChanged();
+                }
+                clicks = 0;
+            }, 300);
+        }
+    });
+
+};
+
+renderDirectMessage = function(dm) {
+
+    var html = [];
+
+    html.push('<div class="notice" id="direct_message-' + dm.id +'">');
+    var avdiv = $('<div><div class="avatar"><a rel="external"><img></a></div></div>').
+        find('a').attr('href', dm.authorUri).end().
+        find('img').attr('src', dm.avatar).attr('title', dm.nickname).end();
+    html.push(avdiv.html());
+    html.push('   <div><a class="author" name="author" href="' +  dm.authorUri + '">' + dm.nickname + '</a>');
+    html.push('   <div class="content">'+ dm.content +'</div>');
+    html.push('   </div><div class="date_link"><a href="' + dm.link + '" rel="external" title="View this message in browser">' + humane_date(dm.updated) + '</a></div>');
+    html.push('<div class="notice_links">');
+    html.push('<button class="direct_message_reply">Reply</button>');
+    html.push('</div></div>');
+    html.push('<div class="clear"></div>');
+
+    return html.join('');
+};
+
+enableDirectMessageControls = function(dm) {
+
+    var that = this;
+    var $dm = $(document.getElementById('direct_message-' + dm.id));
+
+    // XXX: We need a the authorId (sender) to change to in-client user timelines.
+    // And there's no way to get the that (reliably) from the Atom feed
+    // for DMs!
+
+    /*
+    // Override links to external web view of the notice timelines
+    // with click event handlers to display user timelines within the client
+
+    if (isLocalAuthor(dm.authorUri)) {
+
+        $dm.find('div a.author').bind('click', function(event) {
+            Titanium.App.fireEvent("StatusNet_switchUserTimeline", {authorId: dm.authorId});
+            return false;
+        });
+
+        $dm.find('div.avatar').bind('click', function(event) {
+            Titanium.App.fireEvent("StatusNet_switchUserTimeline", {authorId: dm.authorId});
+            return false;
+        });
+    }
+   */
+
+    // Direct message reply
+    $dm.click(function(event) {
+        Titanium.App.fireEvent("StatusNet_sendDirectMessage", {recipient: dm.nickname});
+        return false;
+    });
+
+};
+
+/**
+ * Show profile information header for a user
+ */
+showProfileHeader = function(user, extended, authorId) {
+    Titanium.API.debug("showProfileInfo()");
+    Titanium.API.debug("showProfileInfo() - account.username = " + account.username);
+
+    $('#header').empty();
+
+    var html = [];
+
+    html.push('<div id="profile_panel">');
+    html.push('<img src="' + user.avatarLarge + '"/>');
+
+    if (extended) {
+        Titanium.API.debug("showProfileInfo() - found extended");
+
+        if (authorId !== null && user.username !== account.username) {
+
+            Titanium.API.debug("showProfileInfo() - checkpoint gar");
+
+            html.push('<div id="profile_action_links"');
+
+            if (extended.blocking !== "true") {
+                if (extended.following === "false") {
+                    html.push('<a href="#" class="profile_subscribe">Subscribe</a>');
+                } else {
+                    html.push('<a href="#" class="profile_unsubscribe">Unsubscribe</a>');
+                    html.push('<a href="#" class="profile_direct_message">Direct Message</a>');
+                }
+                html.push('<a href="#" class="profile_block">Block</a>');
+            } else {
+                html.push('<a href="#" class="profile_unblock">Unblock</a>');
+            }
+            html.push('</div');
+        }
+    }
+
+    Titanium.API.debug("showProfileInfo() - checkpoint charlie");
+
+    html.push('<h2>@' + user.username + '</h2>');
+    html.push('<dl class="profile_list">');
+
+    html.push('<dt>Name</dt>');
+    html.push('<dd class="name">');
+    if (user.fullname) {
+        html.push(user.fullname);
+    } else {
+        html.push(user.username);
+    }
+    html.push('</dd>');
+
+    html.push('<dt class="id">User ID</dt>');
+    html.push('<dd class="id">' + user.id + '</dd>');
+
+    if (user.location) {
+        html.push('<dt>Location</dt>');
+        html.push('<dd class="location">' + user.location + '</dd>');
+    }
+
+    if (user.homepage) {
+        html.push('<dt>Homepage</dt>');
+        html.push('<dd><a rel="external" href="' + user.homepage + '">' + user.homepage + '</a></dd>');
+    }
+
+    if (user.bio) {
+        html.push('<dt>Bio</dt>');
+        html.push('<dd class="bio">' + user.bio + '</dd>');
+    }
+
+    html.push('</dl>');
+
+    if (extended) {
+
+        html.push('<dl class="profile_statistics">');
+        html.push('<dt>Subscribers</dt>');
+        html.push('<dd>' + extended.followers_cnt + '</dd>');
+
+        // Put this link back when we have a working subscriptions list on mobile
+        // note: also check to confirm this is a local user; in future we may
+        // support showing profiles for remote users.
+        //
+        //if (user.username === account.username) {
+        //    html.push('<dt><a href="#" class="profile_subscriptions">Subscriptions</a></dt>');
+        //} else {
+            html.push('<dt>Subscriptions</dt>');
+        //}
+
+        html.push('<dd>' + extended.friends_cnt + '</dd>');
+        html.push('<dt>Notices</dt>');
+        html.push('<dd>' + extended.statuses_cnt + '</dd>');
+        html.push('<dt>Favorites</dt>');
+        html.push('<dd>' + extended.favorites_cnt + '</dd>');
+        html.push('</dl>')
+    }
+
+    html.push('</div>');
+
+    Titanium.API.debug("showProfileInfo() - Done building html, doin' my injection");
+
+    $('#header').append(html.join(''));
+
+    $('a.profile_subscribe').live('click', function(event) {
+        $('a.profile_subscribe').attr('disabled', 'disabled');
+        Titanium.App.fireEvent("StatusNet_subscribe", {userId: user.id});
+        return false;
+    });
+
+    $('a.profile_unsubscribe').live('click', function(event) {
+        $('a.profile_unsubscribe').attr('disabled', 'disabled');
+        Titanium.App.fireEvent("StatusNet_unsubscribe", {userId: user.id});
+        return false;
+    });
+
+    $('a.profile_block').live('click', function(event) {
+        $('a.profile_block').attr('disabled', 'disabled');
+        Titanium.App.fireEvent("StatusNet_block", {userId: user.id});
+        return false;
+    });
+
+    $('a.profile_unblock').live('click', function(event) {
+        $('a.profile_unblock').attr('disabled', 'disabled');
+        Titanium.App.fireEvent("StatusNet_unblock", {userId: user.id});
+        return false;
+    });
+
+    $('a.profile_direct_message').live('click', function(event) {
+        Titanium.App.fireEvent("StatusNet_sendDirectMessage", {recipient: user.username});
+        return false;
+    });
+};
+
+
+resetTimeline = function() {
+    notices = [];
+    $('#notices').empty();
+};
+
+/**
+ * Show this if the timeline is empty
+ */
+showEmptyTimeline = function() {
+    resetTimeline();
+    $('#notices').append('<div id="empty_timeline">No notices in this timeline yet.</div>');
+    setTimeout(function() {
+        myScroll.refresh();
+    }, 0);
+};
+
+isLocalAuthor = function(uri) {
+    // Isolate domain name from URI paths and compare
+    var path = uri.split('/');
+    var serverPath = account.apiroot.split('/');
+
+    if (path[2] === serverPath[2]) {
+        return true;
+    }
+    return false;
+};
+
+</script>
+</html>
