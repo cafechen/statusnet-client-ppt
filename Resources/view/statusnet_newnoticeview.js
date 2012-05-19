@@ -498,9 +498,10 @@ StatusNet.NewNoticeView.prototype.resizePhoto = function(media, width, height, m
                     " to " + targetWidth + "x" + targetHeight);
     // Resize through an intermediary imageView
     StatusNet.debug("QQQQQQQQQQQ 0");
+    var base = targetWidth/480 ;
     var imageView = Titanium.UI.createImageView({
-        width: targetWidth,
-        height: targetHeight,
+        width: 480,
+        height: targetHeight/base,
         image: media
     });
     StatusNet.debug("QQQQQQQQQQQ A");
