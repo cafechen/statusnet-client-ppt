@@ -170,7 +170,8 @@ StatusNet.Client.prototype.initInternalListeners = function() {
         }
     });
     Ti.App.addEventListener('StatusNet_tabSelected', function(event) {
-        StatusNet.debug('Event: ' + event.name);
+        StatusNet.debug('Event: ' + event.tabName);
+        that.setAccountLabel(event.tabName);
         that.switchView(event.tabName);
     });
     Ti.App.addEventListener('StatusNet_subscribe', function(event) {
@@ -241,7 +242,7 @@ StatusNet.Client.prototype.initInternalListeners = function() {
         );
     });
     Ti.App.addEventListener('StatusNet_timelineFinishedUpdate', function(event) {
-        StatusNet.debug('Event: ' + event);
+        StatusNet.debug('statusnet_client  StatusNet_timelineFinishedUpdate.....');
         that.toolbar.isLoading = false;
     });
     Titanium.Gesture.addEventListener('orientationchange', function(event) {
@@ -387,6 +388,7 @@ StatusNet.Client.prototype.switchAccount = function(acct) {
 };
 
 StatusNet.Client.prototype.initAccountView = function(acct) {
+    
     StatusNet.debug('initAccountView entered...');
 
     this.account = acct;
@@ -406,43 +408,8 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
 
         this.navbar = StatusNet.Platform.createNavBar(this.mainwin);
 
-        var accountsButton = Titanium.UI.createView({
-            width: 270,
-            height: 44,
-            left: 0,
-            top: 0
-        });
-
-        // To get scaling correct on 240dpi Android, we need to use
-        // an image view instead of a background on the parent view.
-        // As a happy side effect, I think this will also make the
-        // whole area touchable even if the label's short, working
-        // around another Android bug. :
-        var accountsBackground = Titanium.UI.createImageView({
-            width: 270,
-            height: 44,
-            left: 0,
-            top: 0,
-            image: 'images/bg/account_button_bg.png',
-            canScale: true, // silly android hack
-            enableZoomControls: false // silly android hack
-        });
-        if (StatusNet.Platform.dpi == 240) {
-            accountsBackground.image = 'images/bg/account_button_bg240.png';
-        }
-        accountsButton.add(accountsBackground);
-
-        var selfAvatar = this.selfAvatar = Titanium.UI.createImageView({
-            width: 36,
-            height: 36,
-            top: 4,
-            left: 4,
-            canScale: true,
-            enableZoomControls: false
-        });
-        accountsButton.add(selfAvatar);
         var selfLabel = this.selfLabel = Titanium.UI.createLabel({
-            left: 44,
+            left: 115,
             right: 30,
             top: 0,
             bottom: 0,
@@ -452,16 +419,9 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
             },
             minimumFontSize: 8 // This has no effect on Android; we have a hack in setAccountLabel below.
         });
-        accountsButton.add(selfLabel);
 
-        this.setAccountLabel();
-
-        accountsButton.addEventListener('click', function() {
-            StatusNet.debug('showSettings!');
-            that.showSettingsView();
-        });
-        //this.navbar.setLeftNavButton(accountsButton);
-        this.navbar.view.add(accountsButton);
+        this.setAccountLabel('friends');
+        this.navbar.view.add(selfLabel);
 
         var updateButton = Titanium.UI.createButton({
             width: 40,
@@ -493,38 +453,32 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
         updateButton.addEventListener('click', function() {
             that.newNoticeDialog();
         });
-        this.navbar.setRightNavButton(updateButton);
+        this.navbar.setLeftNavButton(updateButton);
+        
+        var logoutButton = Titanium.UI.createButton({
+            width: 70,
+            top: 0,
+            bottom: 0,
+            title: "Logout"
+        });
+        logoutButton.addEventListener('click', function() {
+            StatusNet.debug("logout click......");
+            StatusNet.debug('showSettings!');
+            that.showSettingsView();
+        });
+        this.navbar.setRightNavButton(logoutButton);
 
         var tabinfo = {
-            'public': {
-                deselectedImage: 'images/tabs/new/public.png',
-                selectedImage: 'images/tabs/new/public_on.png',
-                name: 'public'
-            },
+            
             'friends': {
                 deselectedImage: 'images/tabs/new/friends.png',
                 selectedImage: 'images/tabs/new/friends_on.png',
                 name: 'friends'
             },
-            'mentions': {
-                deselectedImage: 'images/tabs/new/mentions.png',
-                selectedImage: 'images/tabs/new/mentions_on.png',
-                name: 'mentions'
-            },
-            'profile': {
-                deselectedImage: 'images/tabs/new/profile.png',
-                selectedImage: 'images/tabs/new/profile_on.png',
-                name: 'user'
-            },
-            'favorites': {
-                deselectedImage: 'images/tabs/new/favorites.png',
-                selectedImage: 'images/tabs/new/favorites_on.png',
-                name: 'favorites'
-            },
-            'inbox': {
-                deselectedImage: 'images/tabs/new/inbox.png',
-                selectedImage: 'images/tabs/new/inbox_on.png',
-                name: 'inbox'
+            'public': {
+                deselectedImage: 'images/tabs/new/public.png',
+                selectedImage: 'images/tabs/new/public_on.png',
+                name: 'public'
             }
             // 'search': {deselectedImage: 'images/tabs/new/search.png', selectedImage: 'images/tabs/new/search_on.png', name: 'search'}
         };
@@ -537,7 +491,7 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
             };
         }
 
-        this.toolbar = StatusNet.createTabbedBar(tabinfo, this.mainwin, 1);
+        this.toolbar = StatusNet.createTabbedBar(tabinfo, this.mainwin, 0);
 
         this.webview = Titanium.UI.createWebView({
             top: that.navbar.height,
@@ -581,48 +535,21 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
         this.mainwin.open();
         StatusNet.debug('initAccountView delaying to wait for timeline...');
     } else {
-        this.setAccountLabel();
-        this.toolbar.highlightTab(1);
+        this.setAccountLabel('friends');
+        this.toolbar.highlightTab(0);
         this.switchView('friends');
         StatusNet.debug('initAccountView DONE!');
     }
 
 };
 
-StatusNet.Client.prototype.setAccountLabel = function() {
-    var avatar = this.selfAvatar;
-    if (this.account.avatar) {
-        if (StatusNet.Platform.isAndroid()) {
-            StatusNet.AvatarCache.lookupAvatar(this.account.avatar, function(path) {
-                // Cached! Load image from local storage.
-                avatar.image = path;
-            });
-        } else {
-            // https://appcelerator.lighthouseapp.com/projects/32238-titanium-mobile/tickets/1680-ios-regression-imageview-loaded-from-local-file-no-longer-scales-in-current-git-build
-            avatar.image = this.account.avatar;
-        }
-    } else {
-        avatar.image = null;
-    }
+StatusNet.Client.prototype.setAccountLabel = function(name) {
+    
+    this.selfLabel.text = name;
 
-    var label = this.account.username + '@' + this.account.getHost();
-    this.selfLabel.text = label;
-
-    // Horrible hack!
-    // https://appcelerator.lighthouseapp.com/projects/32238/tickets/1618-label-property-minimumfontsize-not-implemented-on-android
-    if (StatusNet.Platform.isAndroid()) {
-        var baseSize = 18;
-        var max = 20;
-        var fontSize = baseSize;
-        if (label.length > max) {
-            fontSize = (baseSize * max / label.length);
-        }
-        // Note the below takes no effect:
-        //this.selfLabel.font.fontSize = fontSize;
         this.selfLabel.font = {
-            fontSize: fontSize
+            fontSize: 20
         };
-    }
 };
 
 /**

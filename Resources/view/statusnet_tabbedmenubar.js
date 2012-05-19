@@ -91,7 +91,7 @@ StatusNet.createTabbedBar = function(tabInfo, win, initialSelection) {
     }
 
     var moretab = tb.createMiniTab({
-        index: 4,
+        index: 2,
         deselectedImage: 'images/tabs/new/more.png',
         selectedImage: 'images/tabs/new/more_on.png',
         name: 'more'
@@ -99,9 +99,9 @@ StatusNet.createTabbedBar = function(tabInfo, win, initialSelection) {
     tb.tabs.push(moretab);
     win.add(tb.tabView);
 
-    if (initialSelection) {
-        tb.highlightTab(initialSelection);
-    }
+    //if (initialSelection) {
+    tb.highlightTab(initialSelection);
+    //}
 
     return tb;
 };
@@ -112,15 +112,14 @@ StatusNet.TabbedMenuBar.prototype.setSelectedTab = function(index) {
 
         this.selectedTab = index;
 
-        var moretab = this.tabs[4];
+        var moretab = this.tabs[2];
 
-        this.highlightTab(index);
-
-        if (index === 4) {
-            StatusNet.debug("MORE MORE MORE!");
-            moretab.backgroundImage = moretab.selectedImage;
+        if (index === 2) {
+            StatusNet.debug("show company info...");
+            //moretab.backgroundImage = moretab.selectedImage;
             this.showOverFlowWindow();
         } else {
+            this.highlightTab(index);
             this.isLoading = true;
             var that = this;
 
@@ -139,7 +138,7 @@ StatusNet.TabbedMenuBar.prototype.showOverFlowWindow = function() {
 
     var overFlowWin = Titanium.UI.createWindow(
         {
-            title: "More",
+            title: "About",
             navBarHidden: true
         }
     );
@@ -147,7 +146,7 @@ StatusNet.TabbedMenuBar.prototype.showOverFlowWindow = function() {
     var navbar = StatusNet.Platform.createNavBar(overFlowWin);
 
     var cancelButton = Titanium.UI.createButton({
-        title: "Cancel"
+        title: "Back"
     });
 
     cancelButton.addEventListener('click', function() {
@@ -156,17 +155,16 @@ StatusNet.TabbedMenuBar.prototype.showOverFlowWindow = function() {
 
     navbar.setLeftNavButton(cancelButton);
 
-    this.overFlowTable = Titanium.UI.createTableView({data: this.overFlowTabs, top: navbar.height});
-
-    overFlowWin.add(this.overFlowTable);
-
-    this.overFlowTable.addEventListener('click', function(event) {
-        Titanium.App.fireEvent('StatusNet_tabSelected', {
-            index: -1,
-            tabName: event.rowData.title
+    var webview = Titanium.UI.createWebView({
+            top: navbar.height,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            scalesPageToFit: false,
+            url: "http://www.baidu.com/",
+            backgroundColor: 'white'
         });
-        StatusNet.Platform.animatedClose(overFlowWin);
-    });
+        overFlowWin.add(webview);
 
     StatusNet.Platform.animatedOpen(overFlowWin);
 
@@ -174,7 +172,7 @@ StatusNet.TabbedMenuBar.prototype.showOverFlowWindow = function() {
 
 StatusNet.TabbedMenuBar.prototype.highlightTab = function(index) {
     var i;
-    for (i = 0; i < 5; i++) {
+    for (i = 0; i < 3; i++) {
         var minitab = this.tabs[i];
         if (i === index) {
             minitab.backgroundImage = minitab.selectedImage;
@@ -192,7 +190,7 @@ StatusNet.TabbedMenuBar.prototype.createMiniTab = function(args) {
     var iconSize = 30; // icon size in logical coords
     var padding = (cellSize - iconSize) / 2; // spacing on each side of icon
 
-    var space = (this.width - 200) / 6;
+    var space = (this.width - 120) / 4;
     var left = args.index * (40 + space);
 
     var selectedImage = args.selectedImage;

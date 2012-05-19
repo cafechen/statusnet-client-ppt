@@ -153,10 +153,12 @@ StatusNet.TimelineView.prototype.appendTimelineNotice = function(notice) {
 
     StatusNet.AvatarCache.lookupAvatar(notice.avatar,
         function(filename) {
+        	Titanium.API.debug("onHit... filename:"+filename);
             notice.avatar = filename;
             Titanium.App.fireEvent('StatusNet_appendTimelineNotice', {notice: notice});
         },
         function(url) {
+        	Titanium.API.debug("onMiss... url:"+url);
             Titanium.App.fireEvent('StatusNet_appendTimelineNotice', {notice: notice});
         }
     );

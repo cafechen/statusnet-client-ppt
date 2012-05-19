@@ -20,7 +20,7 @@
 
 StatusNet.SettingsView = function(client) {
 
-    var db = StatusNet.getDB();
+    this.db = StatusNet.getDB();
     this.accounts = [];
     this.workAcct = null;
     this.updateTimeout = null;
@@ -41,7 +41,236 @@ StatusNet.SettingsView.prototype.init = function() {
     StatusNet.debug('SettingsView.init');
     var view = this;
     this.showingLongclickDialog = false;
+    
+    var window = this.window = Titanium.UI.createWindow({
+        title: "Account",
+        backgroundColor: StatusNet.Platform.dialogBackground(),
+        navBarHidden: true // hack for iphone for now
+    });
 
+    var doClose = function() {
+
+        // Hide keyboard...
+        for (var i in view.fields) {
+            if (view.fields.hasOwnProperty(i)) {
+                var field = view.fields[i];
+                if (typeof field.blur == 'function') {
+                    field.blur();
+                }
+            }
+        }
+
+        // view.fields = null;
+        // view.window.open();
+        // view.window.fireEvent('StatusNet_SettingsView_showAccounts');
+        // StatusNet.Platform.animatedClose(window);
+        view.closeWindow();
+    };
+
+    // @fixme drop the duped title if we can figure out why it doesn't come through
+    var navbar = StatusNet.Platform.createNavBar(window, 'account');
+
+    var cancel = Titanium.UI.createButton({
+        title: "Cancel"
+    });
+    cancel.addEventListener('click', function() {
+        doClose();
+    });
+
+    var save = Titanium.UI.createButton({
+        title: "Save"
+    });
+
+    // Check for empty fields. Sending an empty field into
+    // verifyAccount causes Android to crash
+    var checkForEmptyFields = function(onSuccess, onFail) {
+        StatusNet.debug("Checking for empty fields in add account");
+        var site = view.fields.site.value;
+        var username = view.fields.username.value;
+        var password = view.fields.password.value;
+
+        var bad = [];
+        if (!site) {
+            bad.push("Server");
+        }
+        if (!username) {
+            bad.push('Username');
+        }
+        if (!password) {
+            bad.push("Password");
+        }
+
+        var verb = "is";
+
+        if (bad.length > 1) {
+            verb = "are";
+        }
+
+        if (bad.length == 0) {
+            onSuccess();
+        } else {
+            var msg = bad.join(', ') + ' ' + verb + " required.";
+            onFail(msg);
+        }
+    };
+
+    save.addEventListener('click', function() {
+        StatusNet.debug('clicked save');
+        save.enabled = false;
+        checkForEmptyFields(function() {
+            view.verifyAccount(function() {
+                StatusNet.debug('save click: updated');
+                if (view.workAcct != null) {
+                    // @fixme separate the 'update state' and 'save' actions better
+                    view.saveNewAccount();
+                    //account.deleteAccount();
+                    //accounts = StatusNet.Account.listAll(StatusNet.getDB());
+                    var acc = StatusNet.Account.getDefault(StatusNet.getDB());
+                    if(acc){
+                        acc.deleteAccount();
+                        StatusNet.debug('Deleted account... account: ' +acc.username + '@' + acc.getHost());
+                    }
+                    
+                    //var x = event.rowData.acct;
+                    //var acct = StatusNet.Account.getById(x.id);
+                    //StatusNet.debug('Attempting to select account: ' + acct.username + '@' + acct.getHost());
+                    //var workAcct = StatusNet.Account.getById(newAcctId);
+                    view.workAcct.setDefault(StatusNet.getDB());
+                    StatusNet.debug('Saved account... account: ' +view.workAcct.username + '@' + view.workAcct.getHost());
+                    
+                    if (StatusNet.Platform.isAndroid()) {
+                        // Closing the window first seems to exacerbate synch bugs.
+                        // Blergh.
+                        StatusNet.debug('Switching to timeline...');
+                        //view.table.enabled = false;
+                        view.client.switchAccount(view.workAcct);
+                        doClose();
+                     } else {
+                        // Start closing the current window...
+                        doClose();
+
+                        StatusNet.debug('Switching to timeline...');
+                        view.client.switchAccount(view.workAcct);
+                     }
+                }
+            },
+            function() {
+                StatusNet.debug("Could not verify account.");
+                save.enabled = true;
+            });
+        },
+        function(msg) {
+            StatusNet.debug("Some required account fields were empty");
+            var errDialog = Titanium.UI.createAlertDialog({
+                title: 'Fields incomplete',
+                message: msg,
+                buttonNames: ['OK']
+            });
+            errDialog.show();
+            save.enabled = true;
+        });
+    });
+
+    //if (!noCancel) {
+    navbar.setLeftNavButton(cancel);
+    //}
+    navbar.setRightNavButton(save);
+
+    var workArea = Titanium.UI.createView({
+        top: navbar.height,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        layout: 'vertical'
+    });
+    window.add(workArea);
+
+    this.fields = {};
+    var commonProps = {
+        left: 8,
+        right: 8,
+        height: StatusNet.Platform.isAndroid() ? 'auto' : 32, // argghhhhh auto doesn't work on iphone
+        borderStyle: Titanium.UI.INPUT_BORDERSTYLE_ROUNDED,
+        autocapitalization: Titanium.UI.TEXT_AUTOCAPITALIZATION_NONE,
+        autocorrect: false
+    };
+    var fields = {
+        site: {
+            label: "Server",
+            props: {
+                hintText: "example.status.net",
+                returnKeyType:Titanium.UI.RETURNKEY_NEXT,
+                keyboardType: Titanium.UI.KEYBOARD_URL
+            }
+        },
+        username: {
+            label: "Username",
+            props: {
+                hintText: "user",
+                returnKeyType: Titanium.UI.RETURNKEY_NEXT,
+                keyboardType: Titanium.UI.KEYBOARD_EMAIL
+            }
+        },
+        password: {
+            label: "Password",
+            props: {
+                hintText: "Required",
+                passwordMask:true,
+                keyboardType: Titanium.UI.KEYBOARD_EMAIL, // we need to specify *this* or the autocorrect setting doesn't get set on the actual field for Android?!
+                returnKeyType:Titanium.UI.RETURNKEY_DONE
+            }
+        }
+    };
+    for (var i in fields) {
+        if (fields.hasOwnProperty(i)) {
+            var field = fields[i];
+            var props = {};
+            var slurp = function(source) {
+                for (var j in source) {
+                    if (source.hasOwnProperty(j)) {
+                        props[j] = source[j];
+                    }
+                }
+            };
+            slurp(commonProps);
+            slurp(field.props);
+
+            var label = Titanium.UI.createLabel({
+                left: 8,
+                right: 8,
+                height: 'auto',
+                text: field.label
+            });
+            workArea.add(label);
+
+            var text = Titanium.UI.createTextField(props);
+            workArea.add(text);
+
+            this.fields[i] = text;
+        }
+    }
+    this.fields.site.addEventListener('return', function() {
+        view.fields.username.focus();
+    });
+    this.fields.username.addEventListener('return', function() {
+        view.fields.password.focus();
+    });
+    this.fields.password.addEventListener('return', function() {
+        save.fireEvent('click', {});
+    });
+
+    this.fields.status = Titanium.UI.createLabel({
+        text: "",
+        left: 8,
+        right: 8,
+        height: StatusNet.Platform.isAndroid() ? 'auto' : 32
+    });
+    workArea.add(this.fields.status);
+
+    StatusNet.Platform.setInitialFocus(window, this.fields.site);
+    StatusNet.Platform.animatedOpen(window);
+
+/*
     var window = this.window = Titanium.UI.createWindow({
         title: 'Accounts',
         navBarHidden: true
@@ -167,6 +396,7 @@ StatusNet.SettingsView.prototype.init = function() {
         // Leave the main accounts window hidden until later...
         this.showAddAccount(true);
     }
+    */
 };
 
 /**
@@ -382,49 +612,49 @@ StatusNet.SettingsView.prototype.showAccounts = function() {
 
     this.accounts = StatusNet.Account.listAll(StatusNet.getDB());
     this.rows = [];
-    for (var i = 0; i < this.accounts.length; i++) {
-        this.addAccountRow(this.accounts[i]);
-    }
+    // for (var i = 0; i < this.accounts.length; i++) {
+        // this.addAccountRow(this.accounts[i]);
+    // }
 
     // Stick an 'add account' item at the top of the list, similar to
     // the default Android browser's bookmarks list.
-    var row = Titanium.UI.createTableViewRow({
-        height: 64,
-        editable: false,
-        acct: "add-stub"
-    });
-
-    var variant = '';
-    if (StatusNet.Platform.isAndroid()) {
-        if (StatusNet.Platform.dpi == 240) {
-            variant = '-android-high';
-        } else {
-            variant = '-android-medium';
-        }
-    }
-    var avatar = Titanium.UI.createImageView({
-        image: 'images/settings/add-account' + variant + '.png',
-        top: 8,
-        left: 8,
-        width: 48,
-        height: 48,
-        canScale: true, // for Android
-        enableZoomControls: false // for Android
-    });
-    row.add(avatar);
-
-    var label = Titanium.UI.createLabel({
-        text: 'Add account...',
-        left: 80,
-        top: 0,
-        bottom: 0,
-        right: 0,
-        font: {
-            fontSize: 18
-        }
-    });
-    row.add(label);
-    this.rows.push(row);
+    // var row = Titanium.UI.createTableViewRow({
+        // height: 64,
+        // editable: false,
+        // acct: "add-stub"
+    // });
+// 
+    // var variant = '';
+    // if (StatusNet.Platform.isAndroid()) {
+        // if (StatusNet.Platform.dpi == 240) {
+            // variant = '-android-high';
+        // } else {
+            // variant = '-android-medium';
+        // }
+    // }
+    // var avatar = Titanium.UI.createImageView({
+        // image: 'images/settings/add-account' + variant + '.png',
+        // top: 8,
+        // left: 8,
+        // width: 48,
+        // height: 48,
+        // canScale: true, // for Android
+        // enableZoomControls: false // for Android
+    // });
+    // row.add(avatar);
+// 
+    // var label = Titanium.UI.createLabel({
+        // text: 'Add account...',
+        // left: 80,
+        // top: 0,
+        // bottom: 0,
+        // right: 0,
+        // font: {
+            // fontSize: 18
+        // }
+    // });
+    // row.add(label);
+    // this.rows.push(row);
 
     this.table.setData(this.rows);
 };
@@ -434,7 +664,7 @@ StatusNet.SettingsView.prototype.showAccounts = function() {
  * Avatar will start loading asynchronously, whee!
  *
  * @param StatusNet.Account acct
- */
+ 
 StatusNet.SettingsView.prototype.addAccountRow = function(acct) {
     // todo: avatar
     // todo: better formatting
@@ -532,6 +762,7 @@ StatusNet.SettingsView.prototype.addAccountRow = function(acct) {
     this.rows.push(row);
     StatusNet.debug('show account row done.');
 };
+*/
 
 /**
  * Do some extra UI cleanup after removing an account row, and
