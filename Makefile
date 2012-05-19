@@ -1,20 +1,17 @@
-.fake: all desktop mobile tablet blackberry clean
+BASE=../StatusNet Desktop/Resources
+HEYQUERY=../heyQuery/Resources
+DEST=Resources
 
-#all: desktop mobile tablet blackberry
-all: desktop mobile tablet
-
-desktop:
-
-mobile:
-	(cd 'StatusNet Mobile' && make)
-
-tablet:
-	(cd 'StatusNet Tablet' && make)
-
-blackberry:
-	(cd 'StatusNet Blackberry' && make)
+all:
+	test -d "$(DEST)/lib" || mkdir "$(DEST)/lib"
+	rsync -av "$(BASE)/lib/" "$(DEST)/lib/"
+	test -d "$(DEST)/model" || mkdir "$(DEST)/model"
+	rsync -av "$(BASE)/model/" "$(DEST)/model/"
+	rsync -av "$(HEYQUERY)/sizzle.js" "$(DEST)/sizzle.js"
+	rsync -av "$(HEYQUERY)/heyQuery.js" "$(DEST)/heyQuery.js"
 
 clean:
-	(cd 'StatusNet Mobile' && make clean)
-	(cd 'StatusNet Tablet' && make clean)
-	#(cd 'StatusNet Blackberry' && make clean)
+	rm -rf "$(DEST)/lib"
+	rm -rf "$(DEST)/model"
+	rm -f "$(DEST)/sizzle.js"
+	rm -f "$(DEST)/heyQuery.js"
