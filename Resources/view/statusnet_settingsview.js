@@ -20,7 +20,7 @@
 
 StatusNet.SettingsView = function(client) {
 
-    this.db = StatusNet.getDB();
+    var db = StatusNet.getDB();
     this.accounts = [];
     this.workAcct = null;
     this.updateTimeout = null;
@@ -29,6 +29,7 @@ StatusNet.SettingsView = function(client) {
     this.lastSite = '';
     this.client = client;
     this.rows = [];
+    this.nickname = null ;
 
     this.onClose = new StatusNet.Event();
 };
@@ -41,243 +42,15 @@ StatusNet.SettingsView.prototype.init = function() {
     StatusNet.debug('SettingsView.init');
     var view = this;
     this.showingLongclickDialog = false;
-    
+
     var window = this.window = Titanium.UI.createWindow({
-        title: "Account",
-        backgroundColor: StatusNet.Platform.dialogBackground(),
-        navBarHidden: true // hack for iphone for now
-    });
-
-    var doClose = function() {
-
-        // Hide keyboard...
-        for (var i in view.fields) {
-            if (view.fields.hasOwnProperty(i)) {
-                var field = view.fields[i];
-                if (typeof field.blur == 'function') {
-                    field.blur();
-                }
-            }
-        }
-
-        // view.fields = null;
-        // view.window.open();
-        // view.window.fireEvent('StatusNet_SettingsView_showAccounts');
-        // StatusNet.Platform.animatedClose(window);
-        view.closeWindow();
-    };
-
-    // @fixme drop the duped title if we can figure out why it doesn't come through
-    var navbar = StatusNet.Platform.createNavBar(window, 'account');
-
-    var cancel = Titanium.UI.createButton({
-        title: "Cancel"
-    });
-    cancel.addEventListener('click', function() {
-        doClose();
-    });
-
-    var save = Titanium.UI.createButton({
-        title: "Save"
-    });
-
-    // Check for empty fields. Sending an empty field into
-    // verifyAccount causes Android to crash
-    var checkForEmptyFields = function(onSuccess, onFail) {
-        StatusNet.debug("Checking for empty fields in add account");
-        var site = view.fields.site.value;
-        var username = view.fields.username.value;
-        var password = view.fields.password.value;
-
-        var bad = [];
-        if (!site) {
-            bad.push("Server");
-        }
-        if (!username) {
-            bad.push('Username');
-        }
-        if (!password) {
-            bad.push("Password");
-        }
-
-        var verb = "is";
-
-        if (bad.length > 1) {
-            verb = "are";
-        }
-
-        if (bad.length == 0) {
-            onSuccess();
-        } else {
-            var msg = bad.join(', ') + ' ' + verb + " required.";
-            onFail(msg);
-        }
-    };
-
-    save.addEventListener('click', function() {
-        StatusNet.debug('clicked save');
-        save.enabled = false;
-        checkForEmptyFields(function() {
-            view.verifyAccount(function() {
-                StatusNet.debug('save click: updated');
-                if (view.workAcct != null) {
-                    // @fixme separate the 'update state' and 'save' actions better
-                    view.saveNewAccount();
-                    //account.deleteAccount();
-                    //accounts = StatusNet.Account.listAll(StatusNet.getDB());
-                    var acc = StatusNet.Account.getDefault(StatusNet.getDB());
-                    if(acc){
-                        acc.deleteAccount();
-                        StatusNet.debug('Deleted account... account: ' +acc.username + '@' + acc.getHost());
-                    }
-                    
-                    //var x = event.rowData.acct;
-                    //var acct = StatusNet.Account.getById(x.id);
-                    //StatusNet.debug('Attempting to select account: ' + acct.username + '@' + acct.getHost());
-                    //var workAcct = StatusNet.Account.getById(newAcctId);
-                    view.workAcct.setDefault(StatusNet.getDB());
-                    StatusNet.debug('Saved account... account: ' +view.workAcct.username + '@' + view.workAcct.getHost());
-                    
-                    if (StatusNet.Platform.isAndroid()) {
-                        // Closing the window first seems to exacerbate synch bugs.
-                        // Blergh.
-                        StatusNet.debug('Switching to timeline...');
-                        //view.table.enabled = false;
-                        view.client.switchAccount(view.workAcct);
-                        doClose();
-                     } else {
-                        // Start closing the current window...
-                        doClose();
-
-                        StatusNet.debug('Switching to timeline...');
-                        view.client.switchAccount(view.workAcct);
-                     }
-                }
-            },
-            function() {
-                StatusNet.debug("Could not verify account.");
-                save.enabled = true;
-            });
-        },
-        function(msg) {
-            StatusNet.debug("Some required account fields were empty");
-            var errDialog = Titanium.UI.createAlertDialog({
-                title: 'Fields incomplete',
-                message: msg,
-                buttonNames: ['OK']
-            });
-            errDialog.show();
-            save.enabled = true;
-        });
-    });
-
-    //if (!noCancel) {
-    navbar.setLeftNavButton(cancel);
-    //}
-    navbar.setRightNavButton(save);
-
-    var workArea = Titanium.UI.createView({
-        top: navbar.height,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        layout: 'vertical'
-    });
-    window.add(workArea);
-
-    this.fields = {};
-    var commonProps = {
-        left: 8,
-        right: 8,
-        height: StatusNet.Platform.isAndroid() ? 'auto' : 32, // argghhhhh auto doesn't work on iphone
-        borderStyle: Titanium.UI.INPUT_BORDERSTYLE_ROUNDED,
-        autocapitalization: Titanium.UI.TEXT_AUTOCAPITALIZATION_NONE,
-        autocorrect: false
-    };
-    var fields = {
-        site: {
-            label: "Server",
-            props: {
-                hintText: "example.status.net",
-                returnKeyType:Titanium.UI.RETURNKEY_NEXT,
-                keyboardType: Titanium.UI.KEYBOARD_URL
-            }
-        },
-        username: {
-            label: "Username",
-            props: {
-                hintText: "user",
-                returnKeyType: Titanium.UI.RETURNKEY_NEXT,
-                keyboardType: Titanium.UI.KEYBOARD_EMAIL
-            }
-        },
-        password: {
-            label: "Password",
-            props: {
-                hintText: "Required",
-                passwordMask:true,
-                keyboardType: Titanium.UI.KEYBOARD_EMAIL, // we need to specify *this* or the autocorrect setting doesn't get set on the actual field for Android?!
-                returnKeyType:Titanium.UI.RETURNKEY_DONE
-            }
-        }
-    };
-    for (var i in fields) {
-        if (fields.hasOwnProperty(i)) {
-            var field = fields[i];
-            var props = {};
-            var slurp = function(source) {
-                for (var j in source) {
-                    if (source.hasOwnProperty(j)) {
-                        props[j] = source[j];
-                    }
-                }
-            };
-            slurp(commonProps);
-            slurp(field.props);
-
-            var label = Titanium.UI.createLabel({
-                left: 8,
-                right: 8,
-                height: 'auto',
-                text: field.label
-            });
-            workArea.add(label);
-
-            var text = Titanium.UI.createTextField(props);
-            workArea.add(text);
-
-            this.fields[i] = text;
-        }
-    }
-    this.fields.site.addEventListener('return', function() {
-        view.fields.username.focus();
-    });
-    this.fields.username.addEventListener('return', function() {
-        view.fields.password.focus();
-    });
-    this.fields.password.addEventListener('return', function() {
-        save.fireEvent('click', {});
-    });
-
-    this.fields.status = Titanium.UI.createLabel({
-        text: "",
-        left: 8,
-        right: 8,
-        height: StatusNet.Platform.isAndroid() ? 'auto' : 32
-    });
-    workArea.add(this.fields.status);
-
-    StatusNet.Platform.setInitialFocus(window, this.fields.site);
-    StatusNet.Platform.animatedOpen(window);
-
-/*
-    var window = this.window = Titanium.UI.createWindow({
-        title: 'Accounts',
+        title: '企业微博',
         navBarHidden: true
     });
 
     window.addEventListener('StatusNet_SettingsView_showAccounts', function(event) {
         view.showAccounts();
+        //view.client.switchPPTAccount();
     });
 
     // Stack the toolbar above the table view; this'll make our animation awesomer.
@@ -385,27 +158,29 @@ StatusNet.SettingsView.prototype.init = function() {
 
     // Now let's fill out the table!
     view.showAccounts();
+    //view.client.switchPPTAccount();
 
     if (this.accounts.length > 0) {
         // We do the slide-up animation manually rather than
         // doing this as a modal, since that confuses things
         // when we open another modal later.
         this.navbar.setLeftNavButton(cancel);
-        this.open();
+        this.client.switchAccount(this.accounts[0]);
+				this.closeWindow();
+        //this.open();
     } else {
         // Leave the main accounts window hidden until later...
         this.showAddAccount(true);
     }
-    */
 };
 
 /**
  * Open the add-new-account modal dialog
  */
-StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
+StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
     var view = this;
     var window = Titanium.UI.createWindow({
-        title: "Add Account",
+        title: "企业微博",
         backgroundColor: StatusNet.Platform.dialogBackground(),
         navBarHidden: true // hack for iphone for now
     });
@@ -429,7 +204,7 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
     };
 
     // @fixme drop the duped title if we can figure out why it doesn't come through
-    var navbar = StatusNet.Platform.createNavBar(window, 'Add Account');
+    var navbar = StatusNet.Platform.createNavBar(window, '注册');
 
     var cancel = Titanium.UI.createButton({
         title: "Cancel"
@@ -437,16 +212,251 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
     cancel.addEventListener('click', function() {
         doClose();
     });
-
-    var save = Titanium.UI.createButton({
-        title: "Save"
-    });
-
+    
     // Check for empty fields. Sending an empty field into
     // verifyAccount causes Android to crash
     var checkForEmptyFields = function(onSuccess, onFail) {
         StatusNet.debug("Checking for empty fields in add account");
-        var site = view.fields.site.value;
+        //var site = view.fields.site.value;
+        var site = 'a.pengpengtou.com'
+        var username = view.fields.username.value;
+        var password = view.fields.password.value;
+        var verifyPassword = view.fields.verifyPassword.value;
+        var verifyCode = view.fields.verifyCode.value;
+
+        var bad = [];
+        if (!site) {
+            bad.push("Server");
+        }
+        if (!username) {
+            bad.push('Username');
+        }
+        if (!password) {
+            bad.push("Password");
+        }
+        if (!verifyPassword) {
+            bad.push("verifyPassword");
+        }
+        if (!verifyCode) {
+            bad.push("verifyCode");
+        }
+
+        var verb = "is";
+
+        if (bad.length > 1) {
+            verb = "are";
+        }
+
+        if (bad.length == 0) {
+            onSuccess();
+        } else {
+            var msg = bad.join(', ') + ' ' + verb + " required.";
+            onFail(msg);
+        }
+    };
+
+    if (!noCancel) {
+        navbar.setLeftNavButton(cancel);
+    }
+    
+    //navbar.setRightNavButton(save);
+
+    var workArea = Titanium.UI.createView({
+        top: navbar.height,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        layout: 'vertical'
+    });
+    
+    window.add(workArea);
+
+    this.fields = {};
+    var commonProps = {
+        left: 8,
+        right: 8,
+        height: StatusNet.Platform.isAndroid() ? 'auto' : 32, // argghhhhh auto doesn't work on iphone
+        borderStyle: Titanium.UI.INPUT_BORDERSTYLE_ROUNDED,
+        autocapitalization: Titanium.UI.TEXT_AUTOCAPITALIZATION_NONE,
+        autocorrect: false
+    };
+    
+    var fields = {
+    		/*
+        site: {
+            label: "Server",
+            props: {
+                hintText: "example.status.net",
+                returnKeyType:Titanium.UI.RETURNKEY_NEXT,
+                keyboardType: Titanium.UI.KEYBOARD_URL
+            }
+        },*/
+        username: {
+            label: "手机号",
+            props: {
+            		keyboardType: Titanium.UI.KEYBOARD_EMAIL,
+                returnKeyType: Titanium.UI.RETURNKEY_DONE
+            }
+        },
+        password: {
+            label: "密码",
+            props: {
+                passwordMask:true,
+                keyboardType: Titanium.UI.KEYBOARD_EMAIL, // we need to specify *this* or the autocorrect setting doesn't get set on the actual field for Android?!
+                returnKeyType:Titanium.UI.RETURNKEY_DONE
+            }
+        },
+        verifyPassword: {
+            label: "确认密码",
+            props: {
+                passwordMask:true,
+                keyboardType: Titanium.UI.KEYBOARD_EMAIL, // we need to specify *this* or the autocorrect setting doesn't get set on the actual field for Android?!
+                returnKeyType:Titanium.UI.RETURNKEY_DONE
+            }
+        },
+        verifyCode: {
+            label: "验证码",
+            props: {
+                keyboardType: Titanium.UI.KEYBOARD_EMAIL, // we need to specify *this* or the autocorrect setting doesn't get set on the actual field for Android?!
+                returnKeyType:Titanium.UI.RETURNKEY_DONE
+            }
+        }
+    };
+    for (var i in fields) {
+        if (fields.hasOwnProperty(i)) {
+            var field = fields[i];
+            var props = {};
+            var slurp = function(source) {
+                for (var j in source) {
+                    if (source.hasOwnProperty(j)) {
+                        props[j] = source[j];
+                    }
+                }
+            };
+            slurp(commonProps);
+            slurp(field.props);
+
+            var label = Titanium.UI.createLabel({
+                left: 8,
+                right: 8,
+                height: 'auto',
+                text: field.label
+            });
+            workArea.add(label);
+
+            var text = Titanium.UI.createTextField(props);
+            workArea.add(text);
+
+            this.fields[i] = text;
+        }
+    }
+    /*
+    this.fields.site.addEventListener('return', function() {
+        view.fields.username.focus();
+    });
+    */
+    this.fields.username.addEventListener('return', function() {
+        view.fields.password.focus();
+    });
+    this.fields.password.addEventListener('return', function() {
+        view.fields.verifyPassword.focus();
+    });
+    this.fields.verifyPassword.addEventListener('return', function() {
+        view.fields.verifyCode.focus();
+    });
+    this.fields.verifyCode.addEventListener('return', function() {
+        register.fireEvent('click', {});
+    });
+
+    this.fields.status = Titanium.UI.createLabel({
+        text: "",
+        left: 8,
+        right: 8,
+        height: StatusNet.Platform.isAndroid() ? 'auto' : 32
+    });
+    
+    workArea.add(this.fields.status);
+    
+    var login = Titanium.UI.createButton({
+   		title: "登陆"
+    });
+
+    login.addEventListener('click', function() {
+    		doClose();
+        view.showAddAccount(true);
+    });
+    
+    var register = Titanium.UI.createButton({
+   		title: "注册"
+    });
+
+    register.addEventListener('click', function() {
+        view.register(view);
+    });
+    
+    var pasVerify = Titanium.UI.createButton({
+   		title: "获取验证码"
+    });
+    
+    pasVerify.addEventListener('click', function() {
+        StatusNet.debug('clicked pasVerify');
+        view.getVerifyCode();
+    });
+    
+    workArea.add(pasVerify) ;
+    workArea.add(login) ;
+    workArea.add(register) ;
+
+    //StatusNet.Platform.setInitialFocus(window, this.fields.site);
+    StatusNet.Platform.animatedOpen(window);
+};
+
+/**
+ * Open the add-new-account modal dialog
+ */
+StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
+	
+    var view = this;
+    var window = Titanium.UI.createWindow({
+        title: "企业微博",
+        backgroundColor: StatusNet.Platform.dialogBackground(),
+        navBarHidden: true // hack for iphone for now
+    });
+
+    var doClose = function() {
+
+        // Hide keyboard...
+        for (var i in view.fields) {
+            if (view.fields.hasOwnProperty(i)) {
+                var field = view.fields[i];
+                if (typeof field.blur == 'function') {
+                    field.blur();
+                }
+            }
+        }
+
+        view.fields = null;
+        view.window.open();
+        view.window.fireEvent('StatusNet_SettingsView_showAccounts');
+        StatusNet.Platform.animatedClose(window);
+    };
+
+    // @fixme drop the duped title if we can figure out why it doesn't come through
+    var navbar = StatusNet.Platform.createNavBar(window, '登陆');
+
+    var cancel = Titanium.UI.createButton({
+        title: "Cancel"
+    });
+    cancel.addEventListener('click', function() {
+        doClose();
+    });
+    
+    // Check for empty fields. Sending an empty field into
+    // verifyAccount causes Android to crash
+    var checkForEmptyFields = function(onSuccess, onFail) {
+        StatusNet.debug("Checking for empty fields in add account");
+        //var site = view.fields.site.value;
+        var site = 'a.pengpengtou.com'
         var username = view.fields.username.value;
         var password = view.fields.password.value;
 
@@ -475,39 +485,11 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         }
     };
 
-    save.addEventListener('click', function() {
-        StatusNet.debug('clicked save');
-        save.enabled = false;
-        checkForEmptyFields(function() {
-            view.verifyAccount(function() {
-                StatusNet.debug('save click: updated');
-                if (view.workAcct != null) {
-                    // @fixme separate the 'update state' and 'save' actions better
-                    view.saveNewAccount();
-                    doClose();
-                }
-            },
-            function() {
-                StatusNet.debug("Could not verify account.");
-                save.enabled = true;
-            });
-        },
-        function(msg) {
-            StatusNet.debug("Some required account fields were empty");
-            var errDialog = Titanium.UI.createAlertDialog({
-                title: 'Fields incomplete',
-                message: msg,
-                buttonNames: ['OK']
-            });
-            errDialog.show();
-            save.enabled = true;
-        });
-    });
-
     if (!noCancel) {
         navbar.setLeftNavButton(cancel);
     }
-    navbar.setRightNavButton(save);
+    
+    //navbar.setRightNavButton(save);
 
     var workArea = Titanium.UI.createView({
         top: navbar.height,
@@ -516,6 +498,7 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         bottom: 0,
         layout: 'vertical'
     });
+    
     window.add(workArea);
 
     this.fields = {};
@@ -528,6 +511,7 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         autocorrect: false
     };
     var fields = {
+    		/*
         site: {
             label: "Server",
             props: {
@@ -535,19 +519,17 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
                 returnKeyType:Titanium.UI.RETURNKEY_NEXT,
                 keyboardType: Titanium.UI.KEYBOARD_URL
             }
-        },
+        },*/
         username: {
-            label: "Username",
+            label: "手机号",
             props: {
-                hintText: "user",
                 returnKeyType: Titanium.UI.RETURNKEY_NEXT,
                 keyboardType: Titanium.UI.KEYBOARD_EMAIL
             }
         },
         password: {
-            label: "Password",
+            label: "密码",
             props: {
-                hintText: "Required",
                 passwordMask:true,
                 keyboardType: Titanium.UI.KEYBOARD_EMAIL, // we need to specify *this* or the autocorrect setting doesn't get set on the actual field for Android?!
                 returnKeyType:Titanium.UI.RETURNKEY_DONE
@@ -582,14 +564,16 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
             this.fields[i] = text;
         }
     }
+    /*
     this.fields.site.addEventListener('return', function() {
         view.fields.username.focus();
     });
+    */
     this.fields.username.addEventListener('return', function() {
         view.fields.password.focus();
     });
     this.fields.password.addEventListener('return', function() {
-        save.fireEvent('click', {});
+        login.fireEvent('click', {});
     });
 
     this.fields.status = Titanium.UI.createLabel({
@@ -598,9 +582,60 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         right: 8,
         height: StatusNet.Platform.isAndroid() ? 'auto' : 32
     });
+    
     workArea.add(this.fields.status);
 
-    StatusNet.Platform.setInitialFocus(window, this.fields.site);
+    var login = Titanium.UI.createButton({
+   		title: "登陆"
+    });
+
+    login.addEventListener('click', function() {
+        StatusNet.debug('clicked login');
+        login.enabled = false;
+        checkForEmptyFields(function() {
+      		view.checkAccount(view, function(){
+      			StatusNet.debug('####stevenchen nickname2:');
+      			view.verifyAccount(function() {
+              StatusNet.debug('login click: updated');
+              if (view.workAcct != null) {
+                  // @fixme separate the 'update state' and 'login' actions better
+                  view.saveNewAccount();
+                  doClose();
+              }
+            },
+            function() {
+                StatusNet.debug("Could not verify account.");
+                login.enabled = true;
+            });
+    	   	});
+        },
+        function(msg) {
+            StatusNet.debug("Some required account fields were empty");
+            var errDialog = Titanium.UI.createAlertDialog({
+                title: 'Fields incomplete',
+                message: msg,
+                buttonNames: ['确认']
+            });
+            errDialog.show();
+            login.enabled = true;
+        });
+    });
+    
+    var register = Titanium.UI.createButton({
+   		title: "注册"
+    });
+
+    register.addEventListener('click', function() {
+        StatusNet.debug('clicked register');
+        //view.closeWindow() ;
+        doClose();
+        view.showRegister(true);
+    });
+    
+    workArea.add(login) ;
+    workArea.add(register) ;
+
+    //StatusNet.Platform.setInitialFocus(window, this.fields.site);
     StatusNet.Platform.animatedOpen(window);
 };
 
@@ -612,51 +647,61 @@ StatusNet.SettingsView.prototype.showAccounts = function() {
 
     this.accounts = StatusNet.Account.listAll(StatusNet.getDB());
     this.rows = [];
-    // for (var i = 0; i < this.accounts.length; i++) {
-        // this.addAccountRow(this.accounts[i]);
-    // }
+    
+		if(this.accounts.length > 0){
+			this.client.switchAccount(this.accounts[0]);
+			this.closeWindow();
+			return ;
+		}
+		
+		return ;
+    
+    for (var i = 0; i < this.accounts.length; i++) {
+        this.addAccountRow(this.accounts[i]);
+    }
 
     // Stick an 'add account' item at the top of the list, similar to
     // the default Android browser's bookmarks list.
-    // var row = Titanium.UI.createTableViewRow({
-        // height: 64,
-        // editable: false,
-        // acct: "add-stub"
-    // });
-// 
-    // var variant = '';
-    // if (StatusNet.Platform.isAndroid()) {
-        // if (StatusNet.Platform.dpi == 240) {
-            // variant = '-android-high';
-        // } else {
-            // variant = '-android-medium';
-        // }
-    // }
-    // var avatar = Titanium.UI.createImageView({
-        // image: 'images/settings/add-account' + variant + '.png',
-        // top: 8,
-        // left: 8,
-        // width: 48,
-        // height: 48,
-        // canScale: true, // for Android
-        // enableZoomControls: false // for Android
-    // });
-    // row.add(avatar);
-// 
-    // var label = Titanium.UI.createLabel({
-        // text: 'Add account...',
-        // left: 80,
-        // top: 0,
-        // bottom: 0,
-        // right: 0,
-        // font: {
-            // fontSize: 18
-        // }
-    // });
-    // row.add(label);
-    // this.rows.push(row);
+    var row = Titanium.UI.createTableViewRow({
+        height: 64,
+        editable: false,
+        acct: "add-stub"
+    });
+
+    var variant = '';
+    if (StatusNet.Platform.isAndroid()) {
+        if (StatusNet.Platform.dpi == 240) {
+            variant = '-android-high';
+        } else {
+            variant = '-android-medium';
+        }
+    }
+    var avatar = Titanium.UI.createImageView({
+        image: 'images/settings/add-account' + variant + '.png',
+        top: 8,
+        left: 8,
+        width: 48,
+        height: 48,
+        canScale: true, // for Android
+        enableZoomControls: false // for Android
+    });
+    row.add(avatar);
+
+    var label = Titanium.UI.createLabel({
+        text: 'Add account...',
+        left: 80,
+        top: 0,
+        bottom: 0,
+        right: 0,
+        font: {
+            fontSize: 18
+        }
+    });
+    row.add(label);
+    this.rows.push(row);
 
     this.table.setData(this.rows);
+    
 };
 
 /**
@@ -664,7 +709,7 @@ StatusNet.SettingsView.prototype.showAccounts = function() {
  * Avatar will start loading asynchronously, whee!
  *
  * @param StatusNet.Account acct
- 
+ */
 StatusNet.SettingsView.prototype.addAccountRow = function(acct) {
     // todo: avatar
     // todo: better formatting
@@ -749,6 +794,7 @@ StatusNet.SettingsView.prototype.addAccountRow = function(acct) {
                     StatusNet.debug('Attempting to delete account: ' + acct.username + '@' + acct.getHost());
                     that.deleteAccountRow(acct);
                     that.showAccounts();
+                    //that.client.switchPPTAccount();
                     that.showingLongclickDialog = false;
                 } else {
                     StatusNet.debug('Account delete canceled.');
@@ -762,7 +808,6 @@ StatusNet.SettingsView.prototype.addAccountRow = function(acct) {
     this.rows.push(row);
     StatusNet.debug('show account row done.');
 };
-*/
 
 /**
  * Do some extra UI cleanup after removing an account row, and
@@ -837,6 +882,47 @@ StatusNet.SettingsView.prototype.verifyAccount = function(onSuccess, onError) {
     });
 };
 
+StatusNet.SettingsView.prototype.checkAccount = function(view, onSuccess) {
+    var that = this;
+    this.discoverPPTAccount(function(status, responseObj, responseText) {
+     	StatusNet.debug("####stevenchen status: " + status);
+     	StatusNet.debug("####stevenchen nickname: " + responseObj.nickname);
+     	//that.fields.username.value = responseObj.nickname ;
+     	view.nickname = responseObj.nickname ;
+     	//StatusNet.debug("####stevenchen nickname1: " + that.fields.username.value);
+     	onSuccess() ;
+   	}, function(status, responseObj, responseText) {
+     	StatusNet.debug("####stevenchen status: " + status);
+    	StatusNet.debug("####stevenchen responseText: " + responseText);
+  	});
+};
+
+/**
+ * Build an account object from the info in our form, if possible.
+ * We won't yet know for sure whether it's valid, however...
+ *
+ * @param onSuccess function(StatusNet.Account acct)
+ * @param onError function()
+ */
+StatusNet.SettingsView.prototype.discoverPPTAccount = function(onSuccess, onError) {
+	
+    var username = $.trim(this.fields.username.value);
+    var password = this.fields.password.value;
+    var site = 'http://p.pengpengtou.com'
+
+    if (username == '' || password == '' || site == '') {
+        onError();
+        return;
+    }
+    
+    var url = site + '/api/auth.json' ;
+
+    var params = "username=" + username + "&password=" + password ; 
+    
+    StatusNet.HttpClientPPT.send(url,onSuccess,onError,params) ;
+    
+};
+
 /**
  * Build an account object from the info in our form, if possible.
  * We won't yet know for sure whether it's valid, however...
@@ -845,9 +931,12 @@ StatusNet.SettingsView.prototype.verifyAccount = function(onSuccess, onError) {
  * @param onError function()
  */
 StatusNet.SettingsView.prototype.discoverNewAccount = function(onSuccess, onError) {
-    var username = $.trim(this.fields.username.value);
+		StatusNet.debug("####stevenchen discoverNewAccount ");
+		StatusNet.debug("####stevenchen discoverNewAccount this.nickname:" + this.nickname);
+    var username = $.trim(this.nickname);
+		StatusNet.debug("####stevenchen username:" + username);
     var password = this.fields.password.value;
-    var site = $.trim(this.fields.site.value);
+    var site = 'a.pengpengtou.com' //$.trim(this.fields.site.value);
 
     if (username == '' || password == '' || site == '') {
         onError();
@@ -912,3 +1001,90 @@ StatusNet.SettingsView.prototype.closeWindow = function() {
 StatusNet.SettingsView.prototype.close = function() {
     // Close down shared state; not needed here atm.
 };
+
+StatusNet.SettingsView.prototype.getVerifyCode = function() {
+    // Close down shared state; not needed here atm.
+    
+    var username = $.trim(this.fields.username.value);
+    var site = 'http://p.pengpengtou.com'
+
+    if (username == '') {
+        var errDialog = Titanium.UI.createAlertDialog({
+            title: '警告',
+            message: '您必须输入手机号码！',
+            buttonNames: ['确认']
+        });
+        errDialog.show();
+        return ;
+    }
+    
+    var url = site + '/api/get_verify_code.json' ;
+
+    var params = "mobile=" + username ; 
+    
+    StatusNet.HttpClientPPT.send(url,function(status, responseObj, responseText){
+    	StatusNet.debug("####stevenchen get verify code:" + responseObj.verify_code);
+    },function(status, responseObj, responseText){
+    	StatusNet.debug("####stevenchen get verify code:" + responseObj.verify_code);
+    },params) ;
+};
+
+StatusNet.SettingsView.prototype.register = function(view) {
+    // Close down shared state; not needed here atm.
+    
+    var username = $.trim(this.fields.username.value);
+    var password = $.trim(this.fields.password.value);
+    var verifyCode = $.trim(this.fields.verifyCode.value);
+    var site = 'http://p.pengpengtou.com'
+
+    if (username == '') {
+        var errDialog = Titanium.UI.createAlertDialog({
+            title: '警告',
+            message: '您必须输入手机号码！',
+            buttonNames: ['确认']
+        });
+        errDialog.show();
+        return ;
+    }
+    
+    if (password == '') {
+        var errDialog = Titanium.UI.createAlertDialog({
+            title: '警告',
+            message: '您必须输入密码！',
+            buttonNames: ['确认']
+        });
+        errDialog.show();
+        return ;
+    }
+    
+    if (verifyCode == '') {
+        var errDialog = Titanium.UI.createAlertDialog({
+            title: '警告',
+            message: '您必须输入验证码！',
+            buttonNames: ['确认']
+        });
+        errDialog.show();
+        return ;
+    }
+    
+    var url = site + '/api/reg.json' ;
+
+    var params = "mobile=" + username + '&password=' + password + '&pas_verify=' + verifyCode
+    
+    StatusNet.HttpClientPPT.send(url,function(status, responseObj, responseText){
+    	StatusNet.debug("####stevenchen register response:" + responseText);
+    	view.nickname = responseObj.nickname ;
+    	StatusNet.debug("####stevenchen register this.nickname:" + view.nickname);
+    	view.verifyAccount(function() {
+        StatusNet.debug('login click: updated');
+        if (view.workAcct != null) {
+            // @fixme separate the 'update state' and 'login' actions better
+            view.saveNewAccount();
+            doClose();
+        }
+     	});
+    },function(status, responseObj, responseText){
+    	StatusNet.debug("####stevenchen register response:" + responseText);
+    },params) ;
+};
+

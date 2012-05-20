@@ -387,6 +387,16 @@ StatusNet.Client.prototype.switchAccount = function(acct) {
     });
 };
 
+StatusNet.Client.prototype.switchPPTAccount = function() {
+		StatusNet.debug('####ppt switchPPTAccount...');
+		var accounts = StatusNet.Account.listAll(StatusNet.getDB());
+		StatusNet.debug('####ppt switchPPTAccount length:' + accounts.length);
+		var acct = accounts[0];
+    Ti.App.fireEvent('StatusNet_switchAccount', {
+        "id": acct.id
+    });
+};
+
 StatusNet.Client.prototype.initAccountView = function(acct) {
     
     StatusNet.debug('initAccountView entered...');
@@ -464,6 +474,7 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
         logoutButton.addEventListener('click', function() {
             StatusNet.debug("logout click......");
             StatusNet.debug('showSettings!');
+            that.account.deleteAccount();
             that.showSettingsView();
         });
         this.navbar.setRightNavButton(logoutButton);

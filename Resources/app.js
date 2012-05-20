@@ -24,6 +24,7 @@
 var sources = ['statusnet.js',
 
                'model/statusnet_httpclient.js',
+               'model/statusnet_httpclient_ppt.js',
                'model/statusnet_account.js',
                'model/statusnet_timeline.js',
                'model/statusnet_timeline_user.js',
