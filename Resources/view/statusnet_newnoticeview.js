@@ -28,7 +28,8 @@ StatusNet.NewNoticeView = function(data) {
     this.attachment = null;
 
     var db = StatusNet.getDB();
-    this.account = StatusNet.Account.getDefault(db);
+    var accounts = StatusNet.Account.listAll(db);
+    this.account = accounts[0];
 
     this.sent = new StatusNet.Event();
     this.onClose = new StatusNet.Event();
