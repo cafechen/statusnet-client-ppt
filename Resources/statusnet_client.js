@@ -556,11 +556,22 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
 
 StatusNet.Client.prototype.setAccountLabel = function(name) {
     
-    this.selfLabel.text = name;
+    // 修改主界面   显示我的新鲜事、我的分享
+    switch (name) {
 
-        this.selfLabel.font = {
-            fontSize: 20
-        };
+        case 'public':
+            this.selfLabel.text = "我的分享";
+            break;
+        case "friends":
+            this.selfLabel.text = "我的新鲜事";
+            break;
+        default:
+            throw "Gah wrong timeline";
+     }
+    
+     this.selfLabel.font = {
+         fontSize: 20
+     };
 };
 
 /**
