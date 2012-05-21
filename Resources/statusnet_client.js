@@ -419,7 +419,7 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
         this.navbar = StatusNet.Platform.createNavBar(this.mainwin);
 
         var selfLabel = this.selfLabel = Titanium.UI.createLabel({
-            left: 115,
+            left: 110,
             right: 30,
             top: 0,
             bottom: 0,
