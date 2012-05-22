@@ -430,7 +430,7 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
             minimumFontSize: 8 // This has no effect on Android; we have a hack in setAccountLabel below.
         });
 
-        this.setAccountLabel('friends');
+        this.setAccountLabel('user');
         this.navbar.view.add(selfLabel);
 
         var updateButton = Titanium.UI.createButton({
@@ -522,7 +522,7 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
             if (!that.webViewReady) {
                 that.webViewReady = true;
                 StatusNet.debug('initAccountView triggering timeline setup...');
-                that.switchView('friends');
+                that.switchView('user');
             }
         };
         Titanium.App.addEventListener('StatusNet_timelineReady', onReady);
@@ -546,9 +546,9 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
         this.mainwin.open();
         StatusNet.debug('initAccountView delaying to wait for timeline...');
     } else {
-        this.setAccountLabel('friends');
+        this.setAccountLabel('user');
         this.toolbar.highlightTab(0);
-        this.switchView('friends');
+        this.switchView('user');
         StatusNet.debug('initAccountView DONE!');
     }
 
@@ -561,6 +561,9 @@ StatusNet.Client.prototype.setAccountLabel = function(name) {
 
         case 'public':
             this.selfLabel.text = "我的分享";
+            break;
+        case "user":
+            this.selfLabel.text = "我的新鲜事";
             break;
         case "friends":
             this.selfLabel.text = "我的新鲜事";
