@@ -486,10 +486,10 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
                 selectedImage: 'images/tabs/new/friends_on.png',
                 name: 'friends'
             },
-            'public': {
+            'user': {
                 deselectedImage: 'images/tabs/new/public.png',
                 selectedImage: 'images/tabs/new/public_on.png',
-                name: 'public'
+                name: 'user'
             }
             // 'search': {deselectedImage: 'images/tabs/new/search.png', selectedImage: 'images/tabs/new/search_on.png', name: 'search'}
         };
@@ -559,7 +559,7 @@ StatusNet.Client.prototype.setAccountLabel = function(name) {
     // 修改主界面   显示我的新鲜事、我的分享
     switch (name) {
 
-        case 'public':
+        case 'user':
             this.selfLabel.text = "我的分享";
             break;
         case "friends":

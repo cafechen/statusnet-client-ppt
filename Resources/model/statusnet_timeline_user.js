@@ -37,7 +37,7 @@ StatusNet.TimelineUser = function(client, authorId) {
 
     StatusNet.debug("TimelineUser constructor - timeline name: " + this.timeline_name);
 
-    this._url = 'statuses/user_timeline.xml';
+    this._url = 'statuses/user_timeline.as';
 
     this.user = null;
     this.extended = null;
