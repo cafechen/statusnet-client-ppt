@@ -469,7 +469,7 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
             width: 70,
             top: 0,
             bottom: 0,
-            title: "Logout"
+            title: "登出"
         });
         logoutButton.addEventListener('click', function() {
             StatusNet.debug("logout click......");
