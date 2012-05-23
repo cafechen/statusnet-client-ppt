@@ -26,7 +26,7 @@ StatusNet.HttpClient.webRequest = function(url, onSuccess, onError, data, userna
 
         client.onload = function() {
 
-            StatusNet.debug("XYZ webRequest: in onload, before parse " + this.status);
+            StatusNet.debug("XYZ webRequest: in onload, before parse " + this.status + " responseText:" + this.responseText);
 
             var responseXML = null;
             var type = client.getResponseHeader('Content-Type');
@@ -63,7 +63,7 @@ StatusNet.HttpClient.webRequest = function(url, onSuccess, onError, data, userna
 
             } else {
                 StatusNet.debug("webRequest: calling onError");
-
+								StatusNet.debug("####ppt status:" + this.status + " responseXML:" + responseXML + " responseText:" + this.responseText);
                 onError(this.status, responseXML, this.responseText);
             }
             StatusNet.debug("webRequest: done with onload.");
@@ -78,7 +78,7 @@ StatusNet.HttpClient.webRequest = function(url, onSuccess, onError, data, userna
 
         // XXX: client.onerror is only called by mobile's HTTPClient
         client.onerror = function(e) {
-            StatusNet.debug("webRequest: failure!");
+            StatusNet.debug("webRequest: failure! e.error:" + e.error);
             onError(client.status, null, "Error: " + e.error);
         };
 
@@ -103,12 +103,13 @@ StatusNet.HttpClient.webRequest = function(url, onSuccess, onError, data, userna
             // On Mobile/iPhone, no authentication is implemented that I can see.
             //
             // Note: setRequestHeader must be called between open() and send()
+            StatusNet.debug("####ppt: username: " + username + " password:" + password);
             var auth = 'Basic ' + StatusNet.Platform.base64encode(username + ':' + password);
             client.setRequestHeader('Authorization', auth);
         }
 
         if (data) {
-            StatusNet.debug('webRequest: sending data: ' + data);
+            StatusNet.debug('webRequest: sending data: ' + JSON.stringify(data));
             // Titanium Mobile/iPhone doesn't set Content-Type, which breaks PHP's processing.
             if (typeof data == "string") {
                 client.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');

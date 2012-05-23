@@ -30,6 +30,7 @@ StatusNet.SettingsView = function(client) {
     this.client = client;
     this.rows = [];
     this.nickname = null ;
+    this.window = null ;
 
     this.onClose = new StatusNet.Event();
 };
@@ -42,136 +43,7 @@ StatusNet.SettingsView.prototype.init = function() {
     StatusNet.debug('SettingsView.init');
     var view = this;
     this.showingLongclickDialog = false;
-
-    var window = this.window = Titanium.UI.createWindow({
-        title: '企业微博',
-        navBarHidden: true
-    });
-
-    window.addEventListener('StatusNet_SettingsView_showAccounts', function(event) {
-        view.showAccounts();
-        //view.client.switchPPTAccount();
-    });
-
-    // Stack the toolbar above the table view; this'll make our animation awesomer.
-    // Set up our table view...
-    this.table = Titanium.UI.createTableView({
-        editable: true,
-        top: 44, //this.navbar.height
-        zIndex: 100
-    });
-    this.window.add(this.table);
-
-    // @fixme drop the duped title if we can figure out why it doesn't come through
-    this.navbar = StatusNet.Platform.createNavBar(this.window, 'Accounts');
-
-    this.table.addEventListener('click', function(event) {
-        // Selected an account
-
-	    if (view.showingLongclickDialog) {
-            StatusNet.debug("Long click dialog for deleting account is open; ignoring table click");
-	        return;
-	    }
-
-        if (event.rowData.acct == "add-stub") {
-            // Special case!
-            view.showAddAccount();
-            return;
-        }
-
-        // hack -- on Android, we don't seem to get the original object back
-        // but only have its properties, so all the methods are missing.
-        var x = event.rowData.acct;
-        var acct = StatusNet.Account.getById(x.id);
-
-        StatusNet.debug('Attempting to select account: ' + acct.username + '@' + acct.getHost());
-        acct.setDefault(StatusNet.getDB());
-        StatusNet.debug('Saved!');
-
-        if (StatusNet.Platform.isAndroid()) {
-            // Closing the window first seems to exacerbate synch bugs.
-            // Blergh.
-            StatusNet.debug('Switching to timeline...');
-            view.table.enabled = false;
-            view.client.switchAccount(acct);
-            view.closeWindow();
-        } else {
-            // Start closing the current window...
-            view.closeWindow();
-
-            StatusNet.debug('Switching to timeline...');
-            view.client.switchAccount(acct);
-        }
-    });
-    this.table.addEventListener('delete', function(event) {
-        // deleted a row
-        var acct = event.rowData.acct;
-        StatusNet.debug('Attempting to delete account: ' + acct.username + '@' + acct.getHost());
-        view.deleteAccountRow(acct);
-        view.rows = view.rows.splice(event.rowData.index, 1);
-    });
-
-    // And a cancel for account selection.
-    // @fixme don't show this if we're running on first view!
-    var cancel = Titanium.UI.createButton({
-        title: 'Cancel'
-    });
-    cancel.addEventListener('click', function() {
-        view.closeWindow();
-    });
-
-    if (StatusNet.Platform.isApple()) {
-        // @fixme perhaps just use the native thingy here?
-        // Create-account button
-        var create = Titanium.UI.createButton({
-            title: '+'
-        });
-
-        // Edit/done buttons for the table view...
-        this.edit = Titanium.UI.createButton({
-            title: 'Edit'
-        });
-
-        this.done = Titanium.UI.createButton({
-            title: 'Done'
-        });
-        this.edit.addEventListener('click', function() {
-            view.navbar.setRightNavButton(view.done);
-            view.table.editing = true;
-        });
-        this.done.addEventListener('click', function() {
-            view.navbar.setRightNavButton(view.edit);
-            view.table.editing = false;
-        });
-
-        create.addEventListener('click', function() {
-            if (view.table.editing) {
-                view.table.editing = false;
-                view.navbar.setLeftNavButton(view.edit);
-            }
-            view.showAddAccount();
-        });
-
-        // ...and plop them onto the tab header.
-        this.navbar.setRightNavButton(this.edit);
-    }
-
-    // Now let's fill out the table!
-    view.showAccounts();
-    //view.client.switchPPTAccount();
-
-    if (this.accounts.length > 0) {
-        // We do the slide-up animation manually rather than
-        // doing this as a modal, since that confuses things
-        // when we open another modal later.
-        this.navbar.setLeftNavButton(cancel);
-        this.client.switchAccount(this.accounts[0]);
-				this.closeWindow();
-        //this.open();
-    } else {
-        // Leave the main accounts window hidden until later...
-        this.showAddAccount(true);
-    }
+		view.showAddAccount(true);
 };
 
 /**
@@ -197,17 +69,15 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
             }
         }
 
-        view.fields = null;
-        view.window.open();
-        view.window.fireEvent('StatusNet_SettingsView_showAccounts');
+        //view.fields = null;
         StatusNet.Platform.animatedClose(window);
     };
 
     // @fixme drop the duped title if we can figure out why it doesn't come through
-    var navbar = StatusNet.Platform.createNavBar(window, '注册');
+    var navbar = StatusNet.Platform.createNavBar(window, '碰碰头');
 
     var cancel = Titanium.UI.createButton({
-        title: "Cancel"
+        title: "返回"
     });
     cancel.addEventListener('click', function() {
         doClose();
@@ -219,26 +89,26 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
         StatusNet.debug("Checking for empty fields in add account");
         //var site = view.fields.site.value;
         var site = 'a.pengpengtou.com'
-        var username = view.fields.username.value;
-        var password = view.fields.password.value;
-        var verifyPassword = view.fields.verifyPassword.value;
-        var verifyCode = view.fields.verifyCode.value;
+        var username = view.rfields.username.value;
+        var password = view.rfields.password.value;
+        var verifyPassword = view.rfields.verifyPassword.value;
+        var verifyCode = view.rfields.verifyCode.value;
 
         var bad = [];
         if (!site) {
             bad.push("Server");
         }
         if (!username) {
-            bad.push('Username');
+            bad.push('用户名');
         }
         if (!password) {
-            bad.push("Password");
+            bad.push("密码");
         }
         if (!verifyPassword) {
-            bad.push("verifyPassword");
+            bad.push("密码重复");
         }
         if (!verifyCode) {
-            bad.push("verifyCode");
+            bad.push("验证码");
         }
 
         var verb = "is";
@@ -250,7 +120,7 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
         if (bad.length == 0) {
             onSuccess();
         } else {
-            var msg = bad.join(', ') + ' ' + verb + " required.";
+            var msg = bad.join('，') + "必须输入！";
             onFail(msg);
         }
     };
@@ -258,8 +128,6 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
     if (!noCancel) {
         navbar.setLeftNavButton(cancel);
     }
-    
-    //navbar.setRightNavButton(save);
 
     var workArea = Titanium.UI.createView({
         top: navbar.height,
@@ -270,32 +138,51 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
     });
     
     window.add(workArea);
+    
+    var register = Titanium.UI.createButton({
+   		title: "注册",
+   		height:40,
+   		left:25,
+   		right:25,
+   		top:5,
+   		color:'green'
+    });
 
-    this.fields = {};
+    register.addEventListener('click', function() {
+        view.register(view);
+    });
+    
+    var pasVerify = Titanium.UI.createButton({
+   		title: "获取验证码",
+   		height:40,
+   		left:25,
+   		right:25,
+   		top:5,
+   		color:'red'
+    });
+    
+    pasVerify.addEventListener('click', function() {
+        StatusNet.debug('clicked pasVerify');
+        view.getVerifyCode();
+    });
+
+    this.rfields = {};
     var commonProps = {
-        left: 8,
-        right: 8,
+        left: 25,
+        right: 25,
         height: StatusNet.Platform.isAndroid() ? 'auto' : 32, // argghhhhh auto doesn't work on iphone
         borderStyle: Titanium.UI.INPUT_BORDERSTYLE_ROUNDED,
         autocapitalization: Titanium.UI.TEXT_AUTOCAPITALIZATION_NONE,
         autocorrect: false
     };
     
-    var fields = {
-    		/*
-        site: {
-            label: "Server",
-            props: {
-                hintText: "example.status.net",
-                returnKeyType:Titanium.UI.RETURNKEY_NEXT,
-                keyboardType: Titanium.UI.KEYBOARD_URL
-            }
-        },*/
+    var rfields = {
         username: {
             label: "手机号",
             props: {
             		keyboardType: Titanium.UI.KEYBOARD_EMAIL,
-                returnKeyType: Titanium.UI.RETURNKEY_DONE
+                returnKeyType: Titanium.UI.RETURNKEY_DONE,
+                style: Titanium.UI.iPhone.SystemButtonStyle.BORDERED
             }
         },
         password: {
@@ -322,9 +209,9 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
             }
         }
     };
-    for (var i in fields) {
-        if (fields.hasOwnProperty(i)) {
-            var field = fields[i];
+    for (var i in rfields) {
+        if (rfields.hasOwnProperty(i)) {
+            var field = rfields[i];
             var props = {};
             var slurp = function(source) {
                 for (var j in source) {
@@ -337,7 +224,7 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
             slurp(field.props);
 
             var label = Titanium.UI.createLabel({
-                left: 8,
+                left: 25,
                 right: 8,
                 height: 'auto',
                 text: field.label
@@ -346,68 +233,60 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
 
             var text = Titanium.UI.createTextField(props);
             workArea.add(text);
+            
+           	/*
+            if(field.label == "手机号"){
+            	workArea.add(pasVerify) ;
+            }
+            */
 
-            this.fields[i] = text;
+            this.rfields[i] = text;
         }
     }
+    
     /*
-    this.fields.site.addEventListener('return', function() {
-        view.fields.username.focus();
-    });
-    */
     this.fields.username.addEventListener('return', function() {
         view.fields.password.focus();
     });
-    this.fields.password.addEventListener('return', function() {
+    */
+    this.rfields.password.addEventListener('return', function() {
         view.fields.verifyPassword.focus();
     });
-    this.fields.verifyPassword.addEventListener('return', function() {
+    this.rfields.verifyPassword.addEventListener('return', function() {
         view.fields.verifyCode.focus();
     });
-    this.fields.verifyCode.addEventListener('return', function() {
+    this.rfields.verifyCode.addEventListener('return', function() {
         register.fireEvent('click', {});
     });
 
-    this.fields.status = Titanium.UI.createLabel({
+    this.rfields.status = Titanium.UI.createLabel({
         text: "",
-        left: 8,
-        right: 8,
+        left: 25,
+        right: 25,
         height: StatusNet.Platform.isAndroid() ? 'auto' : 32
     });
     
-    workArea.add(this.fields.status);
+    workArea.add(this.rfields.status);
     
+    /*
     var login = Titanium.UI.createButton({
-   		title: "登陆"
+   		title: "登陆",
+   		height:40,
+   		left:25,
+   		right:25,
+   		top:5,
+   		color:'blue'
     });
 
     login.addEventListener('click', function() {
-    		doClose();
         view.showAddAccount(true);
     });
+    */
     
-    var register = Titanium.UI.createButton({
-   		title: "注册"
-    });
-
-    register.addEventListener('click', function() {
-        view.register(view);
-    });
-    
-    var pasVerify = Titanium.UI.createButton({
-   		title: "获取验证码"
-    });
-    
-    pasVerify.addEventListener('click', function() {
-        StatusNet.debug('clicked pasVerify');
-        view.getVerifyCode();
-    });
-    
+    //workArea.add(login) ;
     workArea.add(pasVerify) ;
-    workArea.add(login) ;
     workArea.add(register) ;
 
-    //StatusNet.Platform.setInitialFocus(window, this.fields.site);
     StatusNet.Platform.animatedOpen(window);
 };
 
@@ -417,7 +296,7 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
 StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
 	
     var view = this;
-    var window = Titanium.UI.createWindow({
+    this.window = Titanium.UI.createWindow({
         title: "企业微博",
         backgroundColor: StatusNet.Platform.dialogBackground(),
         navBarHidden: true // hack for iphone for now
@@ -426,26 +305,24 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
     var doClose = function() {
 
         // Hide keyboard...
-        for (var i in view.fields) {
-            if (view.fields.hasOwnProperty(i)) {
-                var field = view.fields[i];
+        for (var i in view.rfields) {
+            if (view.rfields.hasOwnProperty(i)) {
+                var field = view.rfields[i];
                 if (typeof field.blur == 'function') {
                     field.blur();
                 }
             }
         }
 
-        view.fields = null;
-        view.window.open();
-        view.window.fireEvent('StatusNet_SettingsView_showAccounts');
-        StatusNet.Platform.animatedClose(window);
+        view.rfields = null;
+        StatusNet.Platform.animatedClose(this.window);
     };
 
     // @fixme drop the duped title if we can figure out why it doesn't come through
-    var navbar = StatusNet.Platform.createNavBar(window, '登陆');
+    var navbar = StatusNet.Platform.createNavBar(this.window, '碰碰头');
 
     var cancel = Titanium.UI.createButton({
-        title: "Cancel"
+        title: "返回"
     });
     cancel.addEventListener('click', function() {
         doClose();
@@ -457,6 +334,7 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         StatusNet.debug("Checking for empty fields in add account");
         //var site = view.fields.site.value;
         var site = 'a.pengpengtou.com'
+        StatusNet.debug("####ppt view.fields:" + JSON.stringify(view.fields));
         var username = view.fields.username.value;
         var password = view.fields.password.value;
 
@@ -465,10 +343,10 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
             bad.push("Server");
         }
         if (!username) {
-            bad.push('Username');
+            bad.push('用户名');
         }
         if (!password) {
-            bad.push("Password");
+            bad.push("密码");
         }
 
         var verb = "is";
@@ -480,7 +358,7 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         if (bad.length == 0) {
             onSuccess();
         } else {
-            var msg = bad.join(', ') + ' ' + verb + " required.";
+            var msg = bad.join(', ') + "必须输入！";
             onFail(msg);
         }
     };
@@ -489,8 +367,6 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         navbar.setLeftNavButton(cancel);
     }
     
-    //navbar.setRightNavButton(save);
-
     var workArea = Titanium.UI.createView({
         top: navbar.height,
         left: 0,
@@ -499,7 +375,7 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         layout: 'vertical'
     });
     
-    window.add(workArea);
+    this.window.add(workArea);
 
     this.fields = {};
     var commonProps = {
@@ -511,20 +387,11 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         autocorrect: false
     };
     var fields = {
-    		/*
-        site: {
-            label: "Server",
-            props: {
-                hintText: "example.status.net",
-                returnKeyType:Titanium.UI.RETURNKEY_NEXT,
-                keyboardType: Titanium.UI.KEYBOARD_URL
-            }
-        },*/
         username: {
             label: "手机号",
             props: {
-                returnKeyType: Titanium.UI.RETURNKEY_NEXT,
-                keyboardType: Titanium.UI.KEYBOARD_EMAIL
+                returnKeyType: Titanium.UI.RETURNKEY_DONE,
+                keyboardType: Titanium.UI.KEYBOARD_NUMBER
             }
         },
         password: {
@@ -564,11 +431,7 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
             this.fields[i] = text;
         }
     }
-    /*
-    this.fields.site.addEventListener('return', function() {
-        view.fields.username.focus();
-    });
-    */
+    
     this.fields.username.addEventListener('return', function() {
         view.fields.password.focus();
     });
@@ -586,7 +449,11 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
     workArea.add(this.fields.status);
 
     var login = Titanium.UI.createButton({
-   		title: "登陆"
+   		title: "登陆",
+   		height:40,
+   		left:25,
+   		right:25,
+   		color:'blue'
     });
 
     login.addEventListener('click', function() {
@@ -600,6 +467,7 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
               if (view.workAcct != null) {
                   // @fixme separate the 'update state' and 'login' actions better
                   view.saveNewAccount();
+                  view.client.switchAccount(view.workAcct);
                   doClose();
               }
             },
@@ -607,6 +475,9 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
                 StatusNet.debug("Could not verify account.");
                 login.enabled = true;
             });
+    	   	}, function(){
+    	   		StatusNet.debug("Could not get nickname.");
+          	login.enabled = true;
     	   	});
         },
         function(msg) {
@@ -622,212 +493,23 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
     });
     
     var register = Titanium.UI.createButton({
-   		title: "注册"
+   		title: "注册",
+   		height:40,
+   		left:25,
+   		right:25,
+   		top:5,
+   		color:'green'
     });
 
     register.addEventListener('click', function() {
         StatusNet.debug('clicked register');
-        //view.closeWindow() ;
-        doClose();
-        view.showRegister(true);
+        view.showRegister(false);
     });
     
     workArea.add(login) ;
     workArea.add(register) ;
 
-    //StatusNet.Platform.setInitialFocus(window, this.fields.site);
-    StatusNet.Platform.animatedOpen(window);
-};
-
-/**
- * @fixme really should separate this a bit more to model/view?
- */
-StatusNet.SettingsView.prototype.showAccounts = function() {
-    StatusNet.debug('SettingsView.showAccounts');
-
-    this.accounts = StatusNet.Account.listAll(StatusNet.getDB());
-    this.rows = [];
-    
-		if(this.accounts.length > 0){
-			this.client.switchAccount(this.accounts[0]);
-			this.closeWindow();
-			return ;
-		}
-		
-		return ;
-    
-    for (var i = 0; i < this.accounts.length; i++) {
-        this.addAccountRow(this.accounts[i]);
-    }
-
-    // Stick an 'add account' item at the top of the list, similar to
-    // the default Android browser's bookmarks list.
-    var row = Titanium.UI.createTableViewRow({
-        height: 64,
-        editable: false,
-        acct: "add-stub"
-    });
-
-    var variant = '';
-    if (StatusNet.Platform.isAndroid()) {
-        if (StatusNet.Platform.dpi == 240) {
-            variant = '-android-high';
-        } else {
-            variant = '-android-medium';
-        }
-    }
-    var avatar = Titanium.UI.createImageView({
-        image: 'images/settings/add-account' + variant + '.png',
-        top: 8,
-        left: 8,
-        width: 48,
-        height: 48,
-        canScale: true, // for Android
-        enableZoomControls: false // for Android
-    });
-    row.add(avatar);
-
-    var label = Titanium.UI.createLabel({
-        text: 'Add account...',
-        left: 80,
-        top: 0,
-        bottom: 0,
-        right: 0,
-        font: {
-            fontSize: 18
-        }
-    });
-    row.add(label);
-    this.rows.push(row);
-
-    this.table.setData(this.rows);
-    
-};
-
-/**
- * Add an account row to the accounts list.
- * Avatar will start loading asynchronously, whee!
- *
- * @param StatusNet.Account acct
- */
-StatusNet.SettingsView.prototype.addAccountRow = function(acct) {
-    // todo: avatar
-    // todo: better formatting
-    // todo: secure state
-    StatusNet.debug('show account row: ' + acct);
-    var title = acct.username + '@' + acct.getHost();
-    StatusNet.debug('adding row: ' + title);
-
-    var row = Titanium.UI.createTableViewRow({
-        acct: acct,
-        height: 64
-    });
-
-    if (acct.avatar) {
-        var avatar = Titanium.UI.createImageView({
-            top: 0,
-            left: 0,
-            width: 56,
-            height: 56,
-            canScale: true, // for Android
-            enableZoomControls: false // for Android
-        });
-        row.add(avatar);
-        if (StatusNet.Platform.isAndroid()) {
-            StatusNet.AvatarCache.lookupAvatar(acct.avatar, function(path) {
-                avatar.image = path;
-            });
-        } else {
-            // https://appcelerator.lighthouseapp.com/projects/32238-titanium-mobile/tickets/1680-ios-regression-imageview-loaded-from-local-file-no-longer-scales-in-current-git-build
-            avatar.image = acct.avatar;
-        }
-    }
-
-    if (acct.siteLogo) {
-        var logo = Titanium.UI.createImageView({
-            top: 40,
-            left: 40,
-            width: 24,
-            height: 24,
-            canScale: true, // for Android
-            enableZoomControls: false // for Android
-        });
-        row.add(logo);
-        if (StatusNet.Platform.isAndroid()) {
-            StatusNet.AvatarCache.lookupAvatar(acct.siteLogo, function(path) {
-                logo.image = path;
-            });
-        } else {
-            // https://appcelerator.lighthouseapp.com/projects/32238-titanium-mobile/tickets/1680-ios-regression-imageview-loaded-from-local-file-no-longer-scales-in-current-git-build
-            logo.image = acct.siteLogo;
-        }
-    }
-
-    var label = Titanium.UI.createLabel({
-        text: title,
-        left: 80,
-        top: 0,
-        bottom: 0,
-        right: 0,
-        font: {
-            fontWeight: acct.is_default ? 'bold' : 'normal',
-            fontSize: 18
-        },
-        minimumFontSize: 8
-    });
-    row.add(label);
-
-    if (StatusNet.Platform.isAndroid()) {
-        var that = this;
-
-        // There's no native tableview editing system on Android.
-        // Set up a long-click handler to give a delete option.
-        StatusNet.Platform.setupLongClick(row, function() {
-            var dialog = Titanium.UI.createOptionDialog({
-                destructive: 0,
-                cancel: 1,
-                options: ['Delete account', 'Cancel'],
-                title: title + ' options'
-            });
-            dialog.addEventListener('click', function(event) {
-                if (event.index == 0) {
-                    StatusNet.debug('Attempting to delete account: ' + acct.username + '@' + acct.getHost());
-                    that.deleteAccountRow(acct);
-                    that.showAccounts();
-                    //that.client.switchPPTAccount();
-                    that.showingLongclickDialog = false;
-                } else {
-                    StatusNet.debug('Account delete canceled.');
-                }
-            });
-            that.showingLongclickDialog = true;
-            dialog.show();
-        });
-    }
-
-    this.rows.push(row);
-    StatusNet.debug('show account row done.');
-};
-
-/**
- * Do some extra UI cleanup after removing an account row, and
- * show add account screen if all the rows have been removed.
- */
-StatusNet.SettingsView.prototype.deleteAccountRow = function(account) {
-    if (account) {
-        account.deleteAccount();
-        accounts = StatusNet.Account.listAll(StatusNet.getDB());
-        if (accounts.length == 0) {
-            StatusNet.debug("No accounts left; showing add account panel");
-            this.navbar.setRightNavButton(this.edit);
-            this.table.editing = false;
-            this.showAddAccount(true);
-        }
-        // Remove the cancel button if any row has been deleted
-        // because pushing it could return you to an invalid
-        // timeline
-        this.navbar.setLeftNavButton(false);
-    }
+    StatusNet.Platform.animatedOpen(this.window);
 };
 
 /**
@@ -839,10 +521,10 @@ StatusNet.SettingsView.prototype.verifyAccount = function(onSuccess, onError) {
         StatusNet.debug("Discovered... found: " + acct);
 
         that.workAcct = acct;
-        that.fields.status.text = "Testing login...";
+        that.fields.status.text = "开始登陆...";
 
         acct.apiGet('account/verify_credentials.xml', function(status, xml) {
-            that.fields.status.text = "Login confirmed.";
+            that.fields.status.text = "认证通过.";
 
             that.workAcct.avatar = $(xml).find('user > profile_image_url').text();
 
@@ -864,7 +546,7 @@ StatusNet.SettingsView.prototype.verifyAccount = function(onSuccess, onError) {
         }, function(status, msg) {
             if (status == 401) {
                 // Bad auth
-                that.fields.status.text = "Bad nickname or password.";
+                that.fields.status.text = "错误的用户名或密码！";
             } else {
                 that.fields.status.text = "HTTP error " + status;
             }
@@ -882,18 +564,20 @@ StatusNet.SettingsView.prototype.verifyAccount = function(onSuccess, onError) {
     });
 };
 
-StatusNet.SettingsView.prototype.checkAccount = function(view, onSuccess) {
+StatusNet.SettingsView.prototype.checkAccount = function(view, onSuccess, onError) {
     var that = this;
     this.discoverPPTAccount(function(status, responseObj, responseText) {
      	StatusNet.debug("####stevenchen status: " + status);
      	StatusNet.debug("####stevenchen nickname: " + responseObj.nickname);
      	//that.fields.username.value = responseObj.nickname ;
-     	view.nickname = responseObj.nickname ;
+     	that.nickname = responseObj.nickname ;
      	//StatusNet.debug("####stevenchen nickname1: " + that.fields.username.value);
      	onSuccess() ;
    	}, function(status, responseObj, responseText) {
+   		that.fields.status.text = "错误的用户名或密码.";
      	StatusNet.debug("####stevenchen status: " + status);
     	StatusNet.debug("####stevenchen responseText: " + responseText);
+    	onError() ;
   	});
 };
 
@@ -947,7 +631,7 @@ StatusNet.SettingsView.prototype.discoverNewAccount = function(onSuccess, onErro
     var url;
 
     var foundAPI = function(apiroot) {
-        that.fields.status.text = "Found " + apiroot;
+        that.fields.status.text = "寻找" + apiroot + "...";
         onSuccess(new StatusNet.Account(username, password, apiroot));
     };
 
@@ -973,10 +657,10 @@ StatusNet.SettingsView.prototype.discoverNewAccount = function(onSuccess, onErro
     } else {
         // Looks like a bare hostname. Try its root page as HTTPS and HTTP...
         // Try RSD discovery!
-        this.fields.status.text = "Finding secure server...";
+        this.fields.status.text = "寻找服务器...";
         var rsd = 'https://' + site + '/rsd.xml';
         StatusNet.RSD.discoverTwitterApi(rsd, foundAPI, function() {
-            that.fields.status.text = "Finding non-secured server...";
+            that.fields.status.text = "寻找服务器...";
             var rsd = 'http://' + site + '/rsd.xml';
             StatusNet.RSD.discoverTwitterApi(rsd, foundAPI, onError);
         });
@@ -1004,8 +688,8 @@ StatusNet.SettingsView.prototype.close = function() {
 
 StatusNet.SettingsView.prototype.getVerifyCode = function() {
     // Close down shared state; not needed here atm.
-    
-    var username = $.trim(this.fields.username.value);
+    var that = this ;
+    var username = $.trim(this.rfields.username.value);
     var site = 'http://p.pengpengtou.com'
 
     if (username == '') {
@@ -1023,18 +707,20 @@ StatusNet.SettingsView.prototype.getVerifyCode = function() {
     var params = "mobile=" + username ; 
     
     StatusNet.HttpClientPPT.send(url,function(status, responseObj, responseText){
-    	StatusNet.debug("####stevenchen get verify code:" + responseObj.verify_code);
+    	StatusNet.debug("####ppt get verify code:" + responseObj.verify_code);
+    	that.rfields.status.text = "验证码获取成功！请等待短信。";
     },function(status, responseObj, responseText){
-    	StatusNet.debug("####stevenchen get verify code:" + responseObj.verify_code);
+    	//StatusNet.debug("####ppt get verify code:" + responseObj.verify_code);
+    	that.rfields.status.text = "验证码获取失败！";
     },params) ;
 };
 
 StatusNet.SettingsView.prototype.register = function(view) {
     // Close down shared state; not needed here atm.
     
-    var username = $.trim(this.fields.username.value);
-    var password = $.trim(this.fields.password.value);
-    var verifyCode = $.trim(this.fields.verifyCode.value);
+    var username = $.trim(this.rfields.username.value);
+    var password = $.trim(this.rfields.password.value);
+    var verifyCode = $.trim(this.rfields.verifyCode.value);
     var site = 'http://p.pengpengtou.com'
 
     if (username == '') {
@@ -1072,19 +758,22 @@ StatusNet.SettingsView.prototype.register = function(view) {
     var params = "mobile=" + username + '&password=' + password + '&pas_verify=' + verifyCode
     
     StatusNet.HttpClientPPT.send(url,function(status, responseObj, responseText){
-    	StatusNet.debug("####stevenchen register response:" + responseText);
+    	StatusNet.debug("####ppt register response:" + responseText);
     	view.nickname = responseObj.nickname ;
-    	StatusNet.debug("####stevenchen register this.nickname:" + view.nickname);
+    	StatusNet.debug("####ppt register this.nickname:" + view.nickname);
+    	view.fields.username.value = view.rfields.username.value ;
+    	view.fields.password.value = view.rfields.password.value ;
     	view.verifyAccount(function() {
         StatusNet.debug('login click: updated');
         if (view.workAcct != null) {
             // @fixme separate the 'update state' and 'login' actions better
             view.saveNewAccount();
+            view.client.switchAccount(view.workAcct);
             doClose();
         }
      	});
     },function(status, responseObj, responseText){
-    	StatusNet.debug("####stevenchen register response:" + responseText);
+    	StatusNet.debug("####ppt register response:" + responseText);
     },params) ;
 };
 
