@@ -187,8 +187,7 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
             label: "手机号",
             props: {
             		keyboardType: Titanium.UI.KEYBOARD_EMAIL,
-                returnKeyType: Titanium.UI.RETURNKEY_DONE,
-                style: Titanium.UI.iPhone.SystemButtonStyle.BORDERED
+                returnKeyType: Titanium.UI.RETURNKEY_DONE
             }
         },
         password: {
@@ -236,19 +235,10 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
                 text: field.label
             });
 
-            var text = Titanium.UI.createTextField(props);
-            
-            var rowView = Titanium.UI.createView({
-		          top: 20,
-		          left: 0,
-		          right: 0,
-		          bottom: 0,
-		          layout: 'horizontal'
-		       });
-            
-            rowView.add(label);
-            rowView.add(text);
-            workArea.add(rowView);
+            var text = Titanium.UI.createTextField(props);            
+
+         		workArea.add(label);
+         		workArea.add(text);
             
            	/*
             if(field.label == "手机号"){
@@ -475,6 +465,7 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
     login.addEventListener('click', function() {
         StatusNet.debug('clicked login');
         login.enabled = false;
+        register.enabled = false;
         checkForEmptyFields(function() {
       		view.checkAccount(view, function(){
       			StatusNet.debug('####stevenchen nickname2:');
@@ -490,10 +481,12 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
             function() {
                 StatusNet.debug("Could not verify account.");
                 login.enabled = true;
+                register.enabled = true;
             });
     	   	}, function(){
     	   		StatusNet.debug("Could not get nickname.");
           	login.enabled = true;
+          	register.enabled = true;
     	   	});
         },
         function(msg) {
@@ -505,6 +498,7 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
             });
             errDialog.show();
             login.enabled = true;
+            register.enabled = true;
         });
     });
     
