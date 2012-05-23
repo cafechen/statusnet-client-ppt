@@ -146,7 +146,7 @@ StatusNet.TabbedMenuBar.prototype.showOverFlowWindow = function() {
     var navbar = StatusNet.Platform.createNavBar(overFlowWin);
 
     var cancelButton = Titanium.UI.createButton({
-        title: "Back"
+        title: "后退"
     });
 
     cancelButton.addEventListener('click', function() {
