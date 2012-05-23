@@ -117,7 +117,7 @@ StatusNet.NewNoticeView.prototype.init = function() {
     });
 
     var cancelButton = this.cancelButton = Titanium.UI.createButton({
-        title: 'Cancel'
+        title: '取消'
     });
     cancelButton.addEventListener('click', function() {
         that.close();
@@ -125,7 +125,7 @@ StatusNet.NewNoticeView.prototype.init = function() {
     });
 
     var sendButton = this.sendButton = Titanium.UI.createButton({
-        title: "Send",
+        title: "发送",
         enabled: false // gray it out until there's some text!
     });
     sendButton.addEventListener('click', function() {
@@ -258,7 +258,7 @@ StatusNet.NewNoticeView.prototype.init = function() {
 
 StatusNet.NewNoticeView.prototype.title = function()
 {
-    return 'New Notice';
+    return '发分享';
 };
 
 StatusNet.NewNoticeView.prototype.addAttachmentControls = function(controlStrip)
@@ -274,7 +274,7 @@ StatusNet.NewNoticeView.prototype.addAttachmentControls = function(controlStrip)
     controlStrip.add(attachInfo);
 
     var attachButton = this.attachButton = Titanium.UI.createButton({
-        title: 'Attach...',
+        title: '附件...',
         top: 0,
         left: 0,
         width: 80,
