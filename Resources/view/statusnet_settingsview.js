@@ -30,8 +30,6 @@ StatusNet.SettingsView = function(client) {
     this.client = client;
     this.rows = [];
     this.nickname = null ;
-    this.window = null ;
-
     this.onClose = new StatusNet.Event();
 };
 
@@ -43,7 +41,15 @@ StatusNet.SettingsView.prototype.init = function() {
     StatusNet.debug('SettingsView.init');
     var view = this;
     this.showingLongclickDialog = false;
-		view.showAddAccount(true);
+    this.accounts = StatusNet.Account.listAll(StatusNet.getDB());
+    if(this.accounts.length > 0){
+    	for(var i = 1; i < this.accounts.length; i++){
+    		this.accounts[i].deleteAccount();
+    	}
+    	view.client.switchAccount(this.accounts[0]);
+    }else{
+			view.showAddAccount(true);
+		}
 };
 
 /**
@@ -229,10 +235,20 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
                 height: 'auto',
                 text: field.label
             });
-            workArea.add(label);
 
             var text = Titanium.UI.createTextField(props);
-            workArea.add(text);
+            
+            var rowView = Titanium.UI.createView({
+		          top: 20,
+		          left: 0,
+		          right: 0,
+		          bottom: 0,
+		          layout: 'horizontal'
+		       });
+            
+            rowView.add(label);
+            rowView.add(text);
+            workArea.add(rowView);
             
            	/*
             if(field.label == "手机号"){
@@ -296,7 +312,7 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
 StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
 	
     var view = this;
-    this.window = Titanium.UI.createWindow({
+    window = Titanium.UI.createWindow({
         title: "企业微博",
         backgroundColor: StatusNet.Platform.dialogBackground(),
         navBarHidden: true // hack for iphone for now
@@ -315,11 +331,11 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         }
 
         view.rfields = null;
-        StatusNet.Platform.animatedClose(this.window);
+        StatusNet.Platform.animatedClose(window);
     };
 
     // @fixme drop the duped title if we can figure out why it doesn't come through
-    var navbar = StatusNet.Platform.createNavBar(this.window, '碰碰头');
+    var navbar = StatusNet.Platform.createNavBar(window, '碰碰头');
 
     var cancel = Titanium.UI.createButton({
         title: "返回"
@@ -375,7 +391,7 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         layout: 'vertical'
     });
     
-    this.window.add(workArea);
+   	window.add(workArea);
 
     this.fields = {};
     var commonProps = {
@@ -509,7 +525,7 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
     workArea.add(login) ;
     workArea.add(register) ;
 
-    StatusNet.Platform.animatedOpen(this.window);
+    StatusNet.Platform.animatedOpen(window);
 };
 
 /**
