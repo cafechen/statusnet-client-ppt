@@ -1,8 +1,8 @@
-#appname: StatusNet Mobile
-#publisher: zcopley
-#url: StatusNet, Inc.
-#image: appicon.png
-#appid: net.status.client.mobile
-#desc: undefined
-#type: mobile
-#guid: cca143fb-473f-4e8c-9bcb-91b02a08e548
+#appname:pengpengtou
+#publisher:StatusNet, Inc.
+#url:http://status.net/
+#image:appicon.png
+#appid:net.status.client.mobile
+#desc:碰碰头
+#type:mobile
+#guid:cca143fb-473f-4e8c-9bcb-91b02a08e548

@@ -9,11 +9,11 @@
         <target device="android">true</target>
     </deployment-targets>
     <id>net.status.client.mobile</id>
-    <name>StatusNet Mobile</name>
+    <name>pengpengtou</name>
     <version>1.0.7</version>
     <publisher>StatusNet, Inc.</publisher>
     <url>http://status.net/</url>
-    <description>StatusNet Mobile Client</description>
+    <description>碰碰头</description>
     <copyright>2011 StatusNet, Inc.</copyright>
     <icon>appicon@2x.png</icon>
     <persistent-wifi>false</persistent-wifi>
@@ -31,7 +31,7 @@
             <supports-screens android:anyDensity="false"
                 android:largeScreens="true" android:normalScreens="true" android:smallScreens="true"/>
             <!-- Shorten the label... -->
-            <application android:label="StatusNet"/>
+            <application android:label="pengpengtou"/>
         </manifest>
         <activities>
             <!-- Accept text and images sent from other apps -->
