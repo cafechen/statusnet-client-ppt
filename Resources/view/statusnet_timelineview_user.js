@@ -85,12 +85,10 @@ StatusNet.TimelineViewUser.prototype.showHeader = function () {
     var that = this;
 
     // Show extended profile data after asynchronous load of api/users/show.xml
-    /*
     this.client.timeline.getExtendedInfo(
         that.showProfileInfo,
         that.client.timeline.authorId
     );
-    */
 };
 
 StatusNet.TimelineViewUser.prototype.showProfileInfo = function (user, extended, client, authorId) {

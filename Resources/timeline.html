@@ -375,22 +375,25 @@ renderNotice = function(notice, user) {
 
     html.push('<br>');
     html.push('<div>');
-    html.push('<button class="notice_reply">Reply</button>');
+    html.push('<button class="notice_reply">回复</button>');
 
+		/*
     if (notice.favorite === "true") {
         html.push(' <button class="notice_unfave">Unfave</button>');
     } else {
         html.push(' <button class="notice_fave">Fave</button>')
     }
+    */
 
+		
     if (isSelf) {
-        html.push(' <button class="notice_delete">Delete</a>')
+        html.push(' <button class="notice_delete">删除</a>')
     } else {
         if (notice.repeated === "false") {
-            html.push(' <button class="notice_repeat">Repeat</button>');
+            //html.push(' <button class="notice_repeat">Repeat</button>');
         }
     }
-    html.push(' <button class="notice_share">Share</button>');
+    html.push(' <button class="notice_share">转发</button>');
 
     html.push('<div>');
     html.push('</div></div></div>');
