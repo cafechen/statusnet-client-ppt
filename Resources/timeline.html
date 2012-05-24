@@ -619,14 +619,14 @@ showProfileHeader = function(user, extended, authorId) {
 
             if (extended.blocking !== "true") {
                 if (extended.following === "false") {
-                    html.push('<a href="#" class="profile_subscribe">Subscribe</a>');
+                    //html.push('<a href="#" class="profile_subscribe">Subscribe</a>');
                 } else {
-                    html.push('<a href="#" class="profile_unsubscribe">Unsubscribe</a>');
-                    html.push('<a href="#" class="profile_direct_message">Direct Message</a>');
+                    //html.push('<a href="#" class="profile_unsubscribe">Unsubscribe</a>');
+                    //html.push('<a href="#" class="profile_direct_message">Direct Message</a>');
                 }
-                html.push('<a href="#" class="profile_block">Block</a>');
+                //html.push('<a href="#" class="profile_block">Block</a>');
             } else {
-                html.push('<a href="#" class="profile_unblock">Unblock</a>');
+                //html.push('<a href="#" class="profile_unblock">Unblock</a>');
             }
             html.push('</div');
         }
@@ -634,11 +634,11 @@ showProfileHeader = function(user, extended, authorId) {
 
     Titanium.API.debug("showProfileInfo() - checkpoint charlie");
 
-    html.push('<h2>@' + user.username + '</h2>');
+    //html.push('<h2>@' + user.username + '</h2>');
     html.push('<dl class="profile_list">');
 
-    html.push('<dt>Name</dt>');
-    html.push('<dd class="name">');
+    //html.push('<dt>Name</dt>');
+    //html.push('<dd class="name">');
     if (user.fullname) {
         html.push(user.fullname);
     } else {
@@ -646,8 +646,8 @@ showProfileHeader = function(user, extended, authorId) {
     }
     html.push('</dd>');
 
-    html.push('<dt class="id">User ID</dt>');
-    html.push('<dd class="id">' + user.id + '</dd>');
+    //html.push('<dt class="id">User ID</dt>');
+    //html.push('<dd class="id">' + user.id + '</dd>');
 
     if (user.location) {
         html.push('<dt>Location</dt>');
@@ -669,7 +669,7 @@ showProfileHeader = function(user, extended, authorId) {
     if (extended) {
 
         html.push('<dl class="profile_statistics">');
-        html.push('<dt>Subscribers</dt>');
+        html.push('<dt>粉丝</dt>');
         html.push('<dd>' + extended.followers_cnt + '</dd>');
 
         // Put this link back when we have a working subscriptions list on mobile
@@ -679,13 +679,13 @@ showProfileHeader = function(user, extended, authorId) {
         //if (user.username === account.username) {
         //    html.push('<dt><a href="#" class="profile_subscriptions">Subscriptions</a></dt>');
         //} else {
-            html.push('<dt>Subscriptions</dt>');
+            html.push('<dt>关注</dt>');
         //}
 
         html.push('<dd>' + extended.friends_cnt + '</dd>');
-        html.push('<dt>Notices</dt>');
+        html.push('<dt>分享数</dt>');
         html.push('<dd>' + extended.statuses_cnt + '</dd>');
-        html.push('<dt>Favorites</dt>');
+        html.push('<dt>收藏</dt>');
         html.push('<dd>' + extended.favorites_cnt + '</dd>');
         html.push('</dl>')
     }
