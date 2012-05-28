@@ -397,7 +397,7 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
             label: "手机号",
             props: {
                 returnKeyType: Titanium.UI.RETURNKEY_DONE,
-                keyboardType: Titanium.UI.KEYBOARD_NUMBER
+                keyboardType: Titanium.UI.KEYBOARD_EMAIL
             }
         },
         password: {
