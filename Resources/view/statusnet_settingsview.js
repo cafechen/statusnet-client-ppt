@@ -31,6 +31,8 @@ StatusNet.SettingsView = function(client) {
     this.rows = [];
     this.nickname = null ;
     this.onClose = new StatusNet.Event();
+    this.rwindow = null;
+    this.lwindow = null;
 };
 
 /**
@@ -57,7 +59,7 @@ StatusNet.SettingsView.prototype.init = function() {
  */
 StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
     var view = this;
-    var window = Titanium.UI.createWindow({
+    var window = this.rwindow = Titanium.UI.createWindow({
         title: "企业微博",
         backgroundColor: StatusNet.Platform.dialogBackground(),
         navBarHidden: true // hack for iphone for now
@@ -186,13 +188,15 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
         username: {
             label: "手机号",
             props: {
+            		hintText: "手机号",
             		keyboardType: Titanium.UI.KEYBOARD_EMAIL,
                 returnKeyType: Titanium.UI.RETURNKEY_DONE
             }
         },
         password: {
             label: "密码",
-            props: {
+           	props: {
+           			hintText: "密码",
                 passwordMask:true,
                 keyboardType: Titanium.UI.KEYBOARD_EMAIL, // we need to specify *this* or the autocorrect setting doesn't get set on the actual field for Android?!
                 returnKeyType:Titanium.UI.RETURNKEY_DONE
@@ -201,6 +205,7 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
         verifyPassword: {
             label: "确认密码",
             props: {
+            		hintText: "确认密码",
                 passwordMask:true,
                 keyboardType: Titanium.UI.KEYBOARD_EMAIL, // we need to specify *this* or the autocorrect setting doesn't get set on the actual field for Android?!
                 returnKeyType:Titanium.UI.RETURNKEY_DONE
@@ -209,6 +214,7 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
         verifyCode: {
             label: "验证码",
             props: {
+            		hintText: "验证码",
                 keyboardType: Titanium.UI.KEYBOARD_EMAIL, // we need to specify *this* or the autocorrect setting doesn't get set on the actual field for Android?!
                 returnKeyType:Titanium.UI.RETURNKEY_DONE
             }
@@ -237,14 +243,12 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
 
             var text = Titanium.UI.createTextField(props);            
 
-         		workArea.add(label);
+         		//workArea.add(label);
          		workArea.add(text);
             
-           	/*
             if(field.label == "手机号"){
             	workArea.add(pasVerify) ;
             }
-            */
 
             this.rfields[i] = text;
         }
@@ -254,7 +258,6 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
     this.fields.username.addEventListener('return', function() {
         view.fields.password.focus();
     });
-    */
     this.rfields.password.addEventListener('return', function() {
         view.fields.verifyPassword.focus();
     });
@@ -264,6 +267,7 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
     this.rfields.verifyCode.addEventListener('return', function() {
         register.fireEvent('click', {});
     });
+    */
 
     this.rfields.status = Titanium.UI.createLabel({
         text: "",
@@ -290,7 +294,7 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
     */
     
     //workArea.add(login) ;
-    workArea.add(pasVerify) ;
+    //workArea.add(pasVerify) ;
     workArea.add(register) ;
 
     StatusNet.Platform.animatedOpen(window);
@@ -302,7 +306,7 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
 StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
 	
     var view = this;
-    window = Titanium.UI.createWindow({
+    var window = this.lwindow = Titanium.UI.createWindow({
         title: "企业微博",
         backgroundColor: StatusNet.Platform.dialogBackground(),
         navBarHidden: true // hack for iphone for now
@@ -396,6 +400,7 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         username: {
             label: "手机号",
             props: {
+            		hintText:'手机号', 
                 returnKeyType: Titanium.UI.RETURNKEY_DONE,
                 keyboardType: Titanium.UI.KEYBOARD_EMAIL
             }
@@ -403,6 +408,7 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         password: {
             label: "密码",
             props: {
+            		hintText: "密码", 
                 passwordMask:true,
                 keyboardType: Titanium.UI.KEYBOARD_EMAIL, // we need to specify *this* or the autocorrect setting doesn't get set on the actual field for Android?!
                 returnKeyType:Titanium.UI.RETURNKEY_DONE
@@ -429,7 +435,7 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
                 height: 'auto',
                 text: field.label
             });
-            workArea.add(label);
+            //workArea.add(label);
 
             var text = Titanium.UI.createTextField(props);
             workArea.add(text);
@@ -438,12 +444,14 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         }
     }
     
+    /*
     this.fields.username.addEventListener('return', function() {
         view.fields.password.focus();
     });
     this.fields.password.addEventListener('return', function() {
         login.fireEvent('click', {});
     });
+    */
 
     this.fields.status = Titanium.UI.createLabel({
         text: "",
@@ -779,7 +787,12 @@ StatusNet.SettingsView.prototype.register = function(view) {
             // @fixme separate the 'update state' and 'login' actions better
             view.saveNewAccount();
             view.client.switchAccount(view.workAcct);
-            doClose();
+            //view.doClose();
+            if(view.lwindow != null)
+            	StatusNet.Platform.animatedClose(view.lwindow);
+          	if(view.rwindow != null)
+            	StatusNet.Platform.animatedClose(view.rwindow);
+            
         }
      	});
     },function(status, responseObj, responseText){
