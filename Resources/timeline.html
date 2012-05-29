@@ -307,6 +307,8 @@ function objectOrJson(obj) {
  */
 renderNotice = function(notice, user) {
 
+Titanium.API.debug("renderNotice intered...");
+
     var html = [];
     var avatar;
     var author;
@@ -438,6 +440,15 @@ enableNoticeControls = function(noticeDom) {
             return false;
         });
     }
+    
+    $notice.find('div.attach_img').bind('click', function(event) {
+            // Titanium.App.fireEvent("StatusNet_viewAttachImage", {authorId: authorId});
+            // return false;
+            var imgSrc = $notice.find('div.attach_img img').attr('src');
+            Titanium.API.debug('attach_img is clicked...'+imgSrc);
+            Titanium.App.fireEvent("StatusNet_viewAttachImage", {imgSrc: imgSrc});
+            
+    });
 
 
     // Note -- using delegate rather than bind so that buttons that change

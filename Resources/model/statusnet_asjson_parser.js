@@ -201,7 +201,8 @@ StatusNet.ASJsonParser.noticeFromEntry = function(entry) {
     	var end = notice.content.indexOf("jpeg\"") + 4;
     	var image = notice.content.substring(begin, end);
     	Titanium.API.debug("####ppt debug: find image:" + image);
-    	notice.content = notice.content + ' <img width="100" height="75" src="' + image + '" alt="">'
+    	notice.content = notice.content + ' <div class="attach_img"><img width="100" height="75" src="' + image + '" alt=""></div>'
+    	//<div class="attach_img"><img></div>
     }
     notice.nickname  = entry.actor.contact.preferredUsername;
     notice.author    = entry.actor.contact.preferredUsername;

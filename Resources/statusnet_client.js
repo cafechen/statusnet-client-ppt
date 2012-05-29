@@ -245,6 +245,11 @@ StatusNet.Client.prototype.initInternalListeners = function() {
         StatusNet.debug('statusnet_client  StatusNet_timelineFinishedUpdate.....');
         that.toolbar.isLoading = false;
     });
+    Ti.App.addEventListener('StatusNet_viewAttachImage', function(event) {
+        StatusNet.debug('statusnet_client  StatusNet_viewAttachImage..... '+event.imgSrc);
+        
+        that.initAttachViewer(event.imgSrc);
+    });
     Titanium.Gesture.addEventListener('orientationchange', function(event) {
         Titanium.App.fireEvent('StatusNet_orientationChange', {
             orientation: event.orientation
@@ -396,6 +401,51 @@ StatusNet.Client.prototype.switchPPTAccount = function() {
         "id": acct.id
     });
 };
+
+StatusNet.Client.prototype.initAttachViewer = function(url){
+    StatusNet.debug('initAccountView entered... url:'+url);
+    
+    var view = this;
+    var window = this.lwindow = Titanium.UI.createWindow({
+        title: "企业微博",
+        backgroundColor: StatusNet.Platform.dialogBackground(),
+        navBarHidden: true // hack for iphone for now
+    });
+
+    // @fixme drop the duped title if we can figure out why it doesn't come through
+    // var navbar = StatusNet.Platform.createNavBar(window, '图片查看');
+
+    var cancel = Titanium.UI.createButton({
+        title: "返回",
+        width:70,
+        heigth:40,
+        opacity:0.7,
+        left:5,
+        top:5
+    });
+    cancel.addEventListener('click', function() {
+        StatusNet.Platform.animatedClose(window);
+    });
+    
+    //navbar.setLeftNavButton(cancel);
+    
+    var imageWidth = Math.min(Titanium.Platform.displayCaps.platformWidth,
+                          Titanium.Platform.displayCaps.platformHeight);
+    var imageHeight = Math.max(Titanium.Platform.displayCaps.platformWidth,
+                          Titanium.Platform.displayCaps.platformHeight);
+    
+    var image = Ti.UI.createImageView({
+        width:imageWidth,
+        image:url,
+        enableZoomControls:true,
+        touchEnabled:true,
+        canScale:true
+    });
+    window.add(image);
+    window.add(cancel);
+    
+    StatusNet.Platform.animatedOpen(window);
+}
 
 StatusNet.Client.prototype.initAccountView = function(acct) {
     
