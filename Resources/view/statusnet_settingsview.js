@@ -126,7 +126,12 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
         }
 
         if (bad.length == 0) {
-            onSuccess();
+            if(/^1\d{10}$/.test(username)) {
+                onSuccess();
+            } else {
+                var msg = "您输入的手机号非法，请检查后再输入！";
+                onFail(msg);
+            }
         } else {
             var msg = bad.join('，') + "必须输入！";
             onFail(msg);
@@ -366,7 +371,15 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         }
 
         if (bad.length == 0) {
-            onSuccess();
+            if(username == 'user1') {
+                StatusNet.debug("username is user1,continue...");
+                onSuccess();
+            } else if(/^1\d{10}$/.test(username)) {
+                onSuccess();
+            } else {
+                var msg = "您输入的手机号非法，请检查后再输入！";
+                onFail(msg);
+            }
         } else {
             var msg = bad.join(', ') + "必须输入！";
             onFail(msg);
@@ -500,7 +513,7 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         function(msg) {
             StatusNet.debug("Some required account fields were empty");
             var errDialog = Titanium.UI.createAlertDialog({
-                title: 'Fields incomplete',
+                title: '用户提示',
                 message: msg,
                 buttonNames: ['确认']
             });
@@ -718,6 +731,14 @@ StatusNet.SettingsView.prototype.getVerifyCode = function() {
         });
         errDialog.show();
         return ;
+    }else if(!(/^1\d{10}$/.test(username))){
+        var errDialog = Titanium.UI.createAlertDialog({
+            title: '警告',
+            message: '您输入的手机号非法，请检查后再输入！',
+            buttonNames: ['确认']
+        });
+        errDialog.show();
+        return ;
     }
     
     var url = site + '/api/get_verify_code.json' ;
@@ -745,6 +766,14 @@ StatusNet.SettingsView.prototype.register = function(view) {
         var errDialog = Titanium.UI.createAlertDialog({
             title: '警告',
             message: '您必须输入手机号码！',
+            buttonNames: ['确认']
+        });
+        errDialog.show();
+        return ;
+    }else if(!(/^1\d{10}$/.test(username))){
+        var errDialog = Titanium.UI.createAlertDialog({
+            title: '警告',
+            message: '您输入的手机号非法，请检查后再输入！',
             buttonNames: ['确认']
         });
         errDialog.show();
