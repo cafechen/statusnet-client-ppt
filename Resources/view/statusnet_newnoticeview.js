@@ -48,7 +48,6 @@ StatusNet.NewNoticeView.prototype.init = function() {
     var controlStripHeight = 32;
     var topMargin = 0;
     var keyboardMargin = 0;
-
     var window;
 
     if (StatusNet.Platform.isTablet()) {
@@ -237,7 +236,7 @@ StatusNet.NewNoticeView.prototype.init = function() {
     this.addAttachmentControls(controlStrip);
 
     this.actInd = Titanium.UI.createActivityIndicator();
-    this.actInd.message = 'Sending...';
+    this.actInd.message = '发送中...';
 
     if (StatusNet.Platform.isApple()) {
         // iPhone specific activity indicator niceties
@@ -288,7 +287,7 @@ StatusNet.NewNoticeView.prototype.addAttachmentControls = function(controlStrip)
         if (that.attachment == null) {
 
             if (StatusNet.Platform.hasCamera()) {
-                options.push('Take photo');
+                options.push('拍照');
                 callbacks.push(function() {
                     that.openAttachment('camera', function() {
                         that.focus();
@@ -296,7 +295,7 @@ StatusNet.NewNoticeView.prototype.addAttachmentControls = function(controlStrip)
                 });
             }
 
-            options.push('Photo gallery');
+            options.push('图片');
             callbacks.push(function() {
                 that.openAttachment('gallery', function() {
                     that.focus();
@@ -304,7 +303,7 @@ StatusNet.NewNoticeView.prototype.addAttachmentControls = function(controlStrip)
             });
         } else {
             destructive = options.length;
-            options.push('Remove');
+            options.push('移除');
             callbacks.push(function() {
                 that.removeAttachment();
                 that.focus();
@@ -312,13 +311,13 @@ StatusNet.NewNoticeView.prototype.addAttachmentControls = function(controlStrip)
         }
 
         var cancel = options.length;
-        options.push('Cancel');
+        options.push('返回');
         callbacks.push(function() {
             that.focus();
         });
 
         var dialog = Titanium.UI.createOptionDialog({
-            title: 'Attachment',
+            title: '附件',
             options: options,
             cancel: cancel
         });
@@ -400,13 +399,13 @@ StatusNet.NewNoticeView.prototype.addAttachment = function(media) {
     var size = (StatusNet.Platform.isApple() ? media.size : media.length);
     StatusNet.debug('SIZE IS: ' + size);
     var msg = Math.round(size / 1024) + ' KB';
-    this.attachInfo.text = msg;
+    //this.attachInfo.text = msg;
     StatusNet.debug('QQQ: ' + msg);
-    return;
+    //return;
 
     // WTF?  Should everything below this get axed? -- Zach
 
-    media = event.media; // TiBlob
+    //media = event.media; // TiBlob
     /*
     StatusNet.debug('media.width = ' + media.width);
     StatusNet.debug('media.height = ' + media.height);
@@ -419,10 +418,10 @@ StatusNet.NewNoticeView.prototype.addAttachment = function(media) {
     // Width and height are passed on the event on Android,
     // but on the media blob on iPhone. Worse still, on Android
     // the blob has width/height properties which return 0.
-    //var width = (media.width) ? media.width : event.width;
-    //var height = (media.height) ? media.height : event.height;
-    var width = (event.width) ? event.width : media.width;
-    var height = (event.height) ? event.height : media.height;
+    var width = (media.width) ? media.width : event.width;
+    var height = (media.height) ? media.height : event.height;
+    //var width = (event.width) ? event.width : media.width;
+    //var height = (event.height) ? event.height : media.height;
 
     // Scale images down to this maximum width.
     // @fixme resizing has some issues at the moment
@@ -444,9 +443,11 @@ StatusNet.NewNoticeView.prototype.addAttachment = function(media) {
     */
 
     // iPhone doesn't report back the new image type, but it's JPEG.
-    var type = (media.mimeType ? media.mimeType : 'image/jpeg');
-    msg = width + 'x' + height + ' ' + this.niceType(type);
-
+    //var type = (media.mimeType ? media.mimeType : 'image/jpeg');
+    //msg = width + 'x' + height + ' ' + this.niceType(type);
+		size = (StatusNet.Platform.isApple() ? media.size : media.length);
+    StatusNet.debug('SIZE IS: ' + size);
+    msg = Math.round(size / 1024) + ' KB';
     this.attachment = media;
     this.attachInfo.text = msg;
     StatusNet.debug('QQQ: ' + msg);
@@ -479,8 +480,11 @@ StatusNet.NewNoticeView.prototype.resizePhoto = function(media, width, height, m
         return orig;
     }
 
-    var targetWidth = width;
-    var targetHeight = height;
+    var base = width/320 ;
+    var targetWidth = 320 ;
+    var targetHeight = height/base ;
+    
+    /*
     if (width > height) {
         if (width > max) {
             targetWidth = max;
@@ -495,16 +499,16 @@ StatusNet.NewNoticeView.prototype.resizePhoto = function(media, width, height, m
         } else {
             return orig;
         }
-    }
+    }*/
 
     StatusNet.debug("Resizing image from " + width + "x" + height +
                     " to " + targetWidth + "x" + targetHeight);
     // Resize through an intermediary imageView
-    StatusNet.debug("QQQQQQQQQQQ 0");
-    var base = targetWidth/480 ;
+    StatusNet.debug("QQQQQQQQQQQ 0" + targetWidth + " " + targetHeight);
+    
     var imageView = Titanium.UI.createImageView({
-        width: 480,
-        height: targetHeight/base,
+        width: targetWidth,
+        height: targetHeight,
         image: media
     });
     StatusNet.debug("QQQQQQQQQQQ A");
@@ -535,7 +539,7 @@ StatusNet.NewNoticeView.prototype.resizePhoto = function(media, width, height, m
             height: converted.height
         };
     } else {
-        StatusNet.debug("QQQQQQQQQQQ E2");
+        StatusNet.debug("QQQQQQQQQQQ E2 " + converted.width + " " + converted.height);
         return {
             media: converted,
             width: converted.width,
