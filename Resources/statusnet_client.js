@@ -602,8 +602,9 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
                 // });
             // });
             // StatusNet.debug('ALL DONE waiting');
-            that.setAccountLabel(event.tabName);
-            that.switchView(event.tabName);
+            that.setAccountLabel('user');
+            that.toolbar.highlightTab(1);
+            that.switchView('user');
         });
         this.mainwin.open();
         StatusNet.debug('initAccountView delaying to wait for timeline...');
