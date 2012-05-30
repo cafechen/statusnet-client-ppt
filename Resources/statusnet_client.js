@@ -434,14 +434,24 @@ StatusNet.Client.prototype.initAttachViewer = function(url){
     var imageHeight = Math.max(Titanium.Platform.displayCaps.platformWidth,
                           Titanium.Platform.displayCaps.platformHeight);
     
-    var image = Ti.UI.createImageView({
+    // var image = Ti.UI.createImageView({
+        // width:imageWidth,
+        // image:url,
+        // enableZoomControls:true,
+        // touchEnabled:true,
+        // canScale:true
+    // });
+    // window.add(image);
+    
+    var webview = Titanium.UI.createWebView({
+        url:url,
         width:imageWidth,
-        image:url,
         enableZoomControls:true,
-        touchEnabled:true,
-        canScale:true
+        backgroundColor:'black',
+        scalesPageToFit:true
     });
-    window.add(image);
+    window.add(webview);
+    
     window.add(cancel);
     
     StatusNet.Platform.animatedOpen(window);
@@ -582,16 +592,18 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
         // main window's thread, rather than on the new-posting view's thread
         // which dies before we finish loading stuff.
         this.mainwin.addEventListener('StatusNet_refreshAfterPosting', function(event) {
-            StatusNet.debug('gonna re-load');
-            that.view.showHeader();
-            that.view.showSpinner();
-            that.timeline.update(function(cnt) {
-                that.view.hideSpinner();
-                Titanium.App.fireEvent('StatusNet_timelineFinishedUpdate', {
-                    count: cnt
-                });
-            });
-            StatusNet.debug('ALL DONE waiting');
+            // StatusNet.debug('gonna re-load');
+            // that.view.showHeader();
+            // that.view.showSpinner();
+            // that.timeline.update(function(cnt) {
+                // that.view.hideSpinner();
+                // Titanium.App.fireEvent('StatusNet_timelineFinishedUpdate', {
+                    // count: cnt
+                // });
+            // });
+            // StatusNet.debug('ALL DONE waiting');
+            that.setAccountLabel(event.tabName);
+            that.switchView(event.tabName);
         });
         this.mainwin.open();
         StatusNet.debug('initAccountView delaying to wait for timeline...');
