@@ -592,16 +592,18 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
         // main window's thread, rather than on the new-posting view's thread
         // which dies before we finish loading stuff.
         this.mainwin.addEventListener('StatusNet_refreshAfterPosting', function(event) {
-            // StatusNet.debug('gonna re-load');
-            // that.view.showHeader();
-            // that.view.showSpinner();
-            // that.timeline.update(function(cnt) {
-                // that.view.hideSpinner();
-                // Titanium.App.fireEvent('StatusNet_timelineFinishedUpdate', {
-                    // count: cnt
-                // });
-            // });
-            // StatusNet.debug('ALL DONE waiting');
+            /*
+            StatusNet.debug('gonna re-load');
+            that.view.showHeader();
+            that.view.showSpinner();
+            that.timeline.update(function(cnt) {
+                that.view.hideSpinner();
+                Titanium.App.fireEvent('StatusNet_timelineFinishedUpdate', {
+                    count: cnt
+                });
+            });
+            */
+            StatusNet.debug('ALL DONE waiting');
             that.setAccountLabel('user');
             that.toolbar.highlightTab(1);
             that.switchView('user');

@@ -239,8 +239,8 @@ function initScroll(pullUp) {
     var scrollProps = {
         pullToRefresh: 'down',
         bounce: false,
-        pullDownLabel: ['Pull down to refresh...', 'Release to refresh...', 'Loading...'],
-        pullUpLabel: ['Pull up to load more...', 'Release for more...', 'Loading...'],
+        pullDownLabel: ['下拉可刷新...', '松开可刷新...', '加载中...'],
+        pullUpLabel: ['上拉显示更多...', '松开显示更多...', '加载中...'],
 
         onPullDown: function () {
             Titanium.App.fireEvent("StatusNet_timelineRefresh", {
@@ -388,7 +388,7 @@ Titanium.API.debug("renderNotice intered...");
     */
 
 		
-    if (isSelf) {
+    if (user) {
         html.push(' <button class="notice_delete">删除</a>')
     } else {
         if (notice.repeated === "false") {
