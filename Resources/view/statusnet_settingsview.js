@@ -487,6 +487,7 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         StatusNet.debug('clicked login');
         login.enabled = false;
         register.enabled = false;
+        forget.enabled = false;
         checkForEmptyFields(function() {
       		view.checkAccount(view, function(){
       			StatusNet.debug('####stevenchen nickname2:');
@@ -503,11 +504,13 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
                 StatusNet.debug("Could not verify account.");
                 login.enabled = true;
                 register.enabled = true;
+                forget.enabled = true;
             });
     	   	}, function(){
     	   		StatusNet.debug("Could not get nickname.");
           	login.enabled = true;
           	register.enabled = true;
+          	forget.enabled = true;
     	   	});
         },
         function(msg) {
@@ -520,6 +523,7 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
             errDialog.show();
             login.enabled = true;
             register.enabled = true;
+            forget.enabled = true;
         });
     });
     
