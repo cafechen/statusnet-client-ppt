@@ -531,14 +531,29 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
    		top:5,
    		color:'green'
     });
-
+    
     register.addEventListener('click', function() {
         StatusNet.debug('clicked register');
         view.showRegister(false);
     });
     
-    workArea.add(login) ;
-    workArea.add(register) ;
+    var forget = Titanium.UI.createButton({
+        title: "忘记密码？",
+        height:40,
+        left:50,
+        right:50,
+        top:5,
+        // color:'green'
+    });
+
+    forget.addEventListener('click', function() {
+        StatusNet.debug('clicked forget');
+        view.showRegister(false);
+    });
+    
+    workArea.add(login);
+    workArea.add(register);
+    workArea.add(forget);
 
     StatusNet.Platform.animatedOpen(window);
 };
