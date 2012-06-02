@@ -408,6 +408,7 @@ Titanium.API.debug("renderNotice intered...");
 enableNoticeControls = function(noticeDom) {
 
     var $notice = $(noticeDom);
+    
     var name = $notice.attr('name');
     if (!name) {
         Titanium.API.debug('ARGH! got bogus name in enableNoticeControls');
@@ -419,6 +420,8 @@ enableNoticeControls = function(noticeDom) {
     var authorId = name.substring(7); // author-
 
     var noticeAuthor = $notice.find('a.author').text();
+    
+    var noticeContent = $notice.find('div.content').text();
 
     Titanium.API.debug("authorId = " + authorId + " author name = " + noticeAuthor + " noticeId = " + noticeId);
 
@@ -469,7 +472,7 @@ enableNoticeControls = function(noticeDom) {
     });
 
     $notice.delegate('button.notice_repeat', 'click', function(event) {
-        Titanium.App.fireEvent("StatusNet_repeatNotice", {noticeId: noticeId});
+        Titanium.App.fireEvent("StatusNet_repeatNotice", {noticeId: noticeId, noticeAuthor: noticeAuthor});
         return false;
     });
 
@@ -479,7 +482,9 @@ enableNoticeControls = function(noticeDom) {
     });
 
     $notice.delegate('button.notice_share', 'click', function(event) {
-        Titanium.App.fireEvent("StatusNet_shareNotice", {noticeId: noticeId});
+        //Titanium.App.fireEvent("StatusNet_shareNotice", {noticeId: noticeId});
+        //转发微博
+        Titanium.App.fireEvent("StatusNet_forwardNotice", {noticeId: noticeId, noticeAuthor: noticeAuthor, noticeContent: noticeContent});
         return false;
     });
 

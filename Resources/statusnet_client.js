@@ -151,6 +151,10 @@ StatusNet.Client.prototype.initInternalListeners = function() {
         StatusNet.debug('Event: ' + event.name);
         that.shareNotice(event.noticeId);
     });
+    Ti.App.addEventListener('StatusNet_forwardNotice', function(event) {
+        StatusNet.debug('Event: ' + event.name);
+        that.newNoticeDialog(event.noticeId, event.noticeAuthor, event.noticeContent);
+    });
     Ti.App.addEventListener('fakefakefake', function() {
     }); // sigh... heisenbug
     Ti.App.addEventListener('StatusNet_deleteNotice', function(event) {

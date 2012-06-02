@@ -125,9 +125,13 @@ StatusNet.NewNoticeView.prototype.init = function() {
 
     var sendButton = this.sendButton = Titanium.UI.createButton({
         title: "发送",
-        enabled: false // gray it out until there's some text!
+        enabled: true // gray it out until there's some text!
     });
     sendButton.addEventListener('click', function() {
+    		if(that.noticeTextArea.value.trim() == ""){
+    			alert('发送内容不能为空！');
+        	return;
+    		}
         that.postNotice(that.noticeTextArea.value);
     });
 
