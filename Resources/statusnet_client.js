@@ -233,17 +233,23 @@ StatusNet.Client.prototype.initInternalListeners = function() {
         StatusNet.debug('Event: ' + event);
         StatusNet.debug("Got request for older notices from webview, retrieving...");
         // Don't show the regular spinner if the pull-to-refresh spinner is running
-        that.isRefreshing = true;
-        that.timeline.update(function(cnt) {
-            if (that.loadedSound) {
-                that.loadedSound.play();
-            }
-            Titanium.App.fireEvent('StatusNet_timelineFinishedUpdate', {
-                count: cnt
-            });
-        },
-        that.timeline.getOlderNoticesUrl()
-        );
+       	if(that.isRefreshing){
+        	if (that.loadedSound) {
+         		that.loadedSound.play();
+        	}
+       	}else{
+		    	that.isRefreshing = true;
+		      that.timeline.update(function(cnt) {
+		          if (that.loadedSound) {
+		              that.loadedSound.play();
+		          }
+		          Titanium.App.fireEvent('StatusNet_timelineFinishedUpdate', {
+		              count: cnt
+		          });
+		      },
+		      that.timeline.getOlderNoticesUrl()
+		      );
+       	}
     });
     Ti.App.addEventListener('StatusNet_timelineFinishedUpdate', function(event) {
         StatusNet.debug('statusnet_client  StatusNet_timelineFinishedUpdate.....');

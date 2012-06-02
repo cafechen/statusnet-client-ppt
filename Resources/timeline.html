@@ -243,14 +243,16 @@ function initScroll(pullUp) {
         pullUpLabel: ['上拉显示更多...', '松开显示更多...', '加载中...'],
 
         onPullDown: function () {
+        	if(!loadingMore){
             Titanium.App.fireEvent("StatusNet_timelineRefresh", {
                 gar: "gar"
             });
             waitForData();
+        	}
         }
     };
 
-    if (pullUp) {
+    if (pullUp && !loadingMore) {
         scrollProps.pullToRefresh = 'both';
         scrollProps.onPullUp = function() {
             loadingMore = true;
