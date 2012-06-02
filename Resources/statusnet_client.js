@@ -164,13 +164,13 @@ StatusNet.Client.prototype.initInternalListeners = function() {
         // but it looks better on iPhone without one
 
         if (StatusNet.Platform.isAndroid()) {
-            that.getActiveView().showConfirmDialog('Really delete notice?', function() {
+            that.getActiveView().showConfirmDialog('您确认要删除么?', function() {
                 that.deleteNotice(event.noticeId);
-            }, null, 'Yes', 'No');
+            }, null, '是', '否');
         } else {
             that.getActiveView().showConfirmDialog(null, function() {
                 that.deleteNotice(event.noticeId);
-            }, null, 'Delete Notice', 'Cancel');
+            }, null, '删除', '返回');
         }
     });
     Ti.App.addEventListener('StatusNet_tabSelected', function(event) {
@@ -715,7 +715,8 @@ StatusNet.Client.prototype.deleteNotice = function(noticeId) {
     this.account.apiPost(method, params, function(status, response) {
         that.view.hideSpinner();
         StatusNet.debug("Deleted notice " + noticeId);
-        StatusNet.Infobar.flashMessage("Deleted notice " + noticeId);
+        //StatusNet.Infobar.flashMessage("Deleted notice " + noticeId);
+        StatusNet.Infobar.flashMessage("删除成功！");
         Titanium.App.fireEvent('StatusNet_deleteNoticeComplete', {
             noticeId: noticeId
         });
