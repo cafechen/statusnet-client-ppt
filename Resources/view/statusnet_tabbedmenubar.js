@@ -153,7 +153,7 @@ StatusNet.TabbedMenuBar.prototype.showOverFlowWindow = function() {
         StatusNet.Platform.animatedClose(overFlowWin);
     });
 
-    navbar.setLeftNavButton(cancelButton);
+    // navbar.setLeftNavButton(cancelButton);
 
     var webview = Titanium.UI.createWebView({
             top: navbar.height,
@@ -161,7 +161,7 @@ StatusNet.TabbedMenuBar.prototype.showOverFlowWindow = function() {
             right: 0,
             bottom: 0,
             scalesPageToFit: false,
-            url: "http://www.baidu.com/",
+            url: "http://a.pengpengtou.com/info.html/",
             backgroundColor: 'white'
         });
         overFlowWin.add(webview);
