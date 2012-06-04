@@ -129,7 +129,7 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
             if(/^1\d{10}$/.test(username)) {
                 onSuccess();
             } else {
-                var msg = "您输入的手机号非法，请检查后再输入！";
+                var msg = "您输入的手机号不正确，请您再次输入！";
                 onFail(msg);
             }
         } else {
@@ -377,7 +377,7 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
             } else if(/^1\d{10}$/.test(username)) {
                 onSuccess();
             } else {
-                var msg = "您输入的手机号非法，请检查后再输入！";
+                var msg = "您输入的手机号不正确，请您再次输入！";
                 onFail(msg);
             }
         } else {
@@ -753,7 +753,7 @@ StatusNet.SettingsView.prototype.getVerifyCode = function() {
     }else if(!(/^1\d{10}$/.test(username))){
         var errDialog = Titanium.UI.createAlertDialog({
             title: '警告',
-            message: '您输入的手机号非法，请检查后再输入！',
+            message: '您输入的手机号不正确，请您再次输入！',
             buttonNames: ['确认']
         });
         errDialog.show();
@@ -792,7 +792,7 @@ StatusNet.SettingsView.prototype.register = function(view) {
     }else if(!(/^1\d{10}$/.test(username))){
         var errDialog = Titanium.UI.createAlertDialog({
             title: '警告',
-            message: '您输入的手机号非法，请检查后再输入！',
+            message: '您输入的手机号不正确，请您再次输入！',
             buttonNames: ['确认']
         });
         errDialog.show();
