@@ -138,7 +138,7 @@ StatusNet.TabbedMenuBar.prototype.showOverFlowWindow = function() {
 
     var overFlowWin = Titanium.UI.createWindow(
         {
-            title: "关于",
+            title: "新闻",
             navBarHidden: true
         }
     );

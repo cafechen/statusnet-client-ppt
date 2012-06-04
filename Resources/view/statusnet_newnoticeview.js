@@ -177,7 +177,7 @@ StatusNet.NewNoticeView.prototype.init = function() {
         top: topMargin + margin,
         left: margin,
         right: margin,
-        bottom: keyboardMargin + margin + controlStripHeight,
+        bottom: keyboardMargin + margin + controlStripHeight + 25,
         value: '',
         font: {fontSize: 16},
         returnKeyType: Titanium.UI.RETURNKEY_DONE,
@@ -213,7 +213,7 @@ StatusNet.NewNoticeView.prototype.init = function() {
     var controlStrip = Titanium.UI.createView({
             left: margin,
             right: margin,
-            bottom: keyboardMargin + margin,
+            bottom: keyboardMargin + margin + 25,
             height: controlStripHeight
     });
     window.add(controlStrip);
