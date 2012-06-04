@@ -161,7 +161,7 @@ StatusNet.TabbedMenuBar.prototype.showOverFlowWindow = function() {
             right: 0,
             bottom: 0,
             scalesPageToFit: false,
-            url: "http://a.pengpengtou.com/info.html/",
+            url: "http://a.pengpengtou.com/info.html",
             backgroundColor: 'white'
         });
         overFlowWin.add(webview);
