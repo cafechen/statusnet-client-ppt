@@ -178,6 +178,28 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
         StatusNet.debug('clicked pasVerify');
         view.getVerifyCode();
     });
+    
+    this.disableFields = function() {
+    	StatusNet.debug("disable all fields");
+    	view.rfields.username.enabled = false ;
+    	view.rfields.password.enabled = false ;
+    	view.rfields.verifyPassword.enabled = false ;
+    	view.rfields.verifyCode.enabled = false ;
+    	register.enabled = false ;
+    	pasVerify.enabled = false ;
+    	cancel.enabled = false ;
+    }
+    
+    this.enableFields = function() {
+    	StatusNet.debug("enable all fields");
+    	view.rfields.username.enabled = true ;
+    	view.rfields.password.enabled = true ;
+    	view.rfields.verifyPassword.enabled = true ;
+    	view.rfields.verifyCode.enabled = true ;
+    	register.enabled = true ;
+    	pasVerify.enabled = true ;
+    	cancel.enabled = true ;
+    }
 
     this.rfields = {};
     var commonProps = {
@@ -345,6 +367,18 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
     
     // Check for empty fields. Sending an empty field into
     // verifyAccount causes Android to crash
+    var disableFields = function() {
+    	StatusNet.debug("disable all fields");
+    	view.fields.username.enabled = false ;
+    	view.fields.password.enabled = false ;
+    }
+    
+    var enableFields = function() {
+    	StatusNet.debug("enable all fields");
+    	view.fields.username.enabled = true ;
+    	view.fields.password.enabled = true ;
+    }
+    
     var checkForEmptyFields = function(onSuccess, onFail) {
         StatusNet.debug("Checking for empty fields in add account");
         //var site = view.fields.site.value;
@@ -489,6 +523,8 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         register.enabled = false;
         forget.enabled = false;
         checkForEmptyFields(function() {
+        	view.fields.status.text = "开始登陆..." ;
+        	disableFields() ;
       		view.checkAccount(view, function(){
       			StatusNet.debug('####stevenchen nickname2:');
       			view.verifyAccount(function() {
@@ -505,12 +541,14 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
                 login.enabled = true;
                 register.enabled = true;
                 forget.enabled = true;
+                enableFields() ;
             });
     	   	}, function(){
     	   		StatusNet.debug("Could not get nickname.");
           	login.enabled = true;
           	register.enabled = true;
           	forget.enabled = true;
+          	enableFields() ;
     	   	});
         },
         function(msg) {
@@ -524,6 +562,7 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
             login.enabled = true;
             register.enabled = true;
             forget.enabled = true;
+            enableFields() ;
         });
     });
     
@@ -819,9 +858,11 @@ StatusNet.SettingsView.prototype.register = function(view) {
         return ;
     }
     
+  	this.disableFields() ;
+    
     var url = site + '/api/reg.json' ;
 
-    var params = "mobile=" + username + '&password=' + password + '&pas_verify=' + verifyCode
+    var params = "mobile=" + username + '&password=' + password + '&pas_verify=' + verifyCode ;
     
     StatusNet.HttpClientPPT.send(url,function(status, responseObj, responseText){
     	StatusNet.debug("####ppt register response:" + responseText);
@@ -842,9 +883,11 @@ StatusNet.SettingsView.prototype.register = function(view) {
             	StatusNet.Platform.animatedClose(view.rwindow);
             
         }
+        this.enableFields() ;
      	});
     },function(status, responseObj, responseText){
     	StatusNet.debug("####ppt register response:" + responseText);
+    	this.enableFields() ;
     },params) ;
 };
 
