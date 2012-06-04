@@ -153,7 +153,7 @@ StatusNet.TabbedMenuBar.prototype.showOverFlowWindow = function() {
         StatusNet.Platform.animatedClose(overFlowWin);
     });
 
-    navbar.setLeftNavButton(cancelButton);
+    // navbar.setLeftNavButton(cancelButton);
 
     var webview = Titanium.UI.createWebView({
             top: navbar.height,
