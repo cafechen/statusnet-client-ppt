@@ -768,8 +768,21 @@ StatusNet.SettingsView.prototype.getVerifyCode = function() {
     	StatusNet.debug("####ppt get verify code:" + responseObj.verify_code);
     	that.rfields.status.text = "验证码获取成功！请等待短信。";
     },function(status, responseObj, responseText){
-    	//StatusNet.debug("####ppt get verify code:" + responseObj.verify_code);
-    	that.rfields.status.text = "验证码获取失败！";
+    	StatusNet.debug("####ppt get verify code:" + responseObj.verify_code+" status:"+status);
+    	var errDialog = Titanium.UI.createAlertDialog({
+            title: '用户提示',
+            message: '此帐号已注册，新的验证码已用短信下发！ status: '+status,
+            buttonNames: ['确认']
+            });
+    	if(status==201){
+    	    var errDialog = Titanium.UI.createAlertDialog({
+            title: '用户提示',
+            message: '此帐号已注册，新的验证码已用短信下发！',
+            buttonNames: ['确认']
+        });
+    	}else{
+    	    that.rfields.status.text = "验证码获取失败！";
+    	}
     },params) ;
 };
 
