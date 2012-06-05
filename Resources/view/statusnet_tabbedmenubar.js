@@ -92,8 +92,8 @@ StatusNet.createTabbedBar = function(tabInfo, win, initialSelection) {
 
     var moretab = tb.createMiniTab({
         index: 2,
-        deselectedImage: 'images/tabs/new/more.png',
-        selectedImage: 'images/tabs/new/more_on.png',
+        deselectedImage: 'images/tabs/new/info.png',
+        selectedImage: 'images/tabs/new/info_on.png',
         name: 'more'
     });
     tb.tabs.push(moretab);
@@ -138,7 +138,7 @@ StatusNet.TabbedMenuBar.prototype.showOverFlowWindow = function() {
 
     var overFlowWin = Titanium.UI.createWindow(
         {
-            title: "关于",
+            title: "新闻",
             navBarHidden: true
         }
     );
@@ -153,7 +153,8 @@ StatusNet.TabbedMenuBar.prototype.showOverFlowWindow = function() {
         StatusNet.Platform.animatedClose(overFlowWin);
     });
 
-    // navbar.setLeftNavButton(cancelButton);
+  	
+  	//navbar.setLeftNavButton(cancelButton);
 
     var webview = Titanium.UI.createWebView({
             top: navbar.height,
@@ -161,7 +162,7 @@ StatusNet.TabbedMenuBar.prototype.showOverFlowWindow = function() {
             right: 0,
             bottom: 0,
             scalesPageToFit: false,
-            url: "http://a.pengpengtou.com/info.html/",
+            url: "http://a.pengpengtou.com/info.html",
             backgroundColor: 'white'
         });
         overFlowWin.add(webview);
