@@ -27,6 +27,8 @@ StatusNet.NewNoticeView = function(data) {
     this.data = data;
     this.event = null;
     this.attachment = null;
+    this.noticeTextAreaValue = "";
+    this.TPLJsonObj = null;
 
     var db = StatusNet.getDB();
     var accounts = StatusNet.Account.listAll(db);
@@ -207,6 +209,7 @@ StatusNet.NewNoticeView.prototype.init = function() {
             noticeTextArea.value = data.initialText;
         }
     }
+    this.noticeTextAreaValue = noticeTextArea.value;
     window.add(noticeTextArea);
 
     // Horizontal control strip that should live between the textarea
@@ -284,6 +287,14 @@ StatusNet.NewNoticeView.prototype.addAttachmentControls = function(controlStrip)
         width: 80,
         height: controlStrip.height
     });
+    
+    var tplButton = this.tplButton = Titanium.UI.createButton({
+        title: '模版',
+        top: 0,
+        left: 140,
+        width: 60,
+        height: controlStrip.height
+    });
 
     attachButton.addEventListener('click', function() {
         var options = [];
@@ -336,7 +347,12 @@ StatusNet.NewNoticeView.prototype.addAttachmentControls = function(controlStrip)
         });
         dialog.show();
     });
+    
+    tplButton.addEventListener('click', function() {
+        that.getTPL();
+    });
     controlStrip.add(attachButton);
+    controlStrip.add(tplButton);
 };
 
 StatusNet.NewNoticeView.prototype.openAttachment = function(source, callback)
@@ -644,6 +660,74 @@ StatusNet.NewNoticeView.prototype.postNotice = function(noticeText)
             StatusNet.showNetworkError(status, response, responseText, "Error posting notice: ");
         }
     );
+};
+
+StatusNet.NewNoticeView.prototype.getTPL = function()
+{
+    StatusNet.debug("NewNoticeView.getTPL()");
+    if (Titanium.Network.online == false) {
+        alert("No internet connection!");
+        return;
+    }
+
+    var that = this;
+    var url = "http://p.pengpengtou.com/api/get_tpl.json";
+
+    this.enableControls(false);
+    this.actInd.show();
+    this.TPLJsonObj = null;
+
+    StatusNet.HttpClientPPT.send(url,function(status, responseObj, responseText){
+        StatusNet.debug("####ppt succuss status:" + status+" responseObj:"+responseObj+" responseText:"+responseText);
+        that.actInd.hide();
+        that.enableControls(true);
+        
+        var options = [];
+        var callbacks = [];
+        var obj = responseObj;
+        that.TPLJsonObj = obj;
+        StatusNet.debug("####ppt succuss obj:" + obj+" obj.length: "+obj.length);
+        if (obj.length) {
+            var i;
+            for (i=0; i < obj.length; i++) {
+                StatusNet.debug("####ppt succuss obj item"+i+":" + obj[i]+" stringifyItem:"+JSON.stringify(obj[i]));
+                options.push(obj[i].name);
+                callbacks.push(function() {
+                    that.focus();
+                    StatusNet.debug("####ppt succuss TPLJsonObj:" + that.TPLJsonObj[0]+" content:"+that.TPLJsonObj[0].content);
+                    that.noticeTextArea.value = that.noticeTextAreaValue + that.TPLJsonObj[0].content;
+                });
+            }
+        }
+        
+        var destructive = -1;
+        var cancel = options.length;
+        options.push('返回');
+        callbacks.push(function() {
+            that.focus();
+        });
+
+        var dialog = Titanium.UI.createOptionDialog({
+            title: '模版',
+            options: options,
+            cancel: cancel
+        });
+        if (destructive > -1) {
+            dialog.destructive = destructive;
+        }
+        dialog.addEventListener('click', function(event) {
+            if (event.index !== undefined && callbacks[event.index] !== undefined) {
+                callbacks[event.index]();
+            }
+        });
+        dialog.show();
+    },function(status, responseObj, responseText){
+        StatusNet.debug("####ppt error status:" + status+" responseObj:"+responseObj+" responseText:"+responseText);
+        that.actInd.hide();
+        that.enableControls(true);
+        StatusNet.showNetworkError(status, response, responseText, "Error posting notice: ");
+    }) ;
+    
 };
 
 StatusNet.NewNoticeView.prototype.close = function()
