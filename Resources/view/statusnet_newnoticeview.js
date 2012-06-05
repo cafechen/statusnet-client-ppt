@@ -25,6 +25,7 @@ StatusNet.NewNoticeView = function(data) {
     StatusNet.debug("NewNoticeView constructor");
 
     this.data = data;
+    this.event = null;
     this.attachment = null;
 
     var db = StatusNet.getDB();
@@ -177,7 +178,7 @@ StatusNet.NewNoticeView.prototype.init = function() {
         top: topMargin + margin,
         left: margin,
         right: margin,
-        bottom: keyboardMargin + margin + controlStripHeight + 40,
+        bottom: keyboardMargin + margin + controlStripHeight,
         value: '',
         font: {fontSize: 16},
         returnKeyType: Titanium.UI.RETURNKEY_DONE,
@@ -213,7 +214,7 @@ StatusNet.NewNoticeView.prototype.init = function() {
     var controlStrip = Titanium.UI.createView({
             left: margin,
             right: margin,
-            bottom: keyboardMargin + margin + 40,
+            bottom: keyboardMargin + margin,
             height: controlStripHeight
     });
     window.add(controlStrip);
@@ -350,8 +351,10 @@ StatusNet.NewNoticeView.prototype.openAttachment = function(source, callback)
     var that = this;
     StatusNet.debug("QQQQQQ Getting attachment - source is: " + source);
     this.getPhoto(source, function(event) {
+        that.event = event;
         if (event.status == 'success') {
             StatusNet.debug('Photo attachment ok!');
+            StatusNet.debug('width:' + event.width+" height:"+event.height);
             that.addAttachment(event.media);
         } else if (event.status == 'cancel') {
             StatusNet.debug('Photo attachment canceled.');
@@ -403,9 +406,9 @@ StatusNet.NewNoticeView.prototype.addAttachment = function(media) {
     var size = (StatusNet.Platform.isApple() ? media.size : media.length);
     StatusNet.debug('SIZE IS: ' + size);
     var msg = Math.round(size / 1024) + ' KB';
-    //this.attachInfo.text = msg;
+    this.attachInfo.text = msg;
     StatusNet.debug('QQQ: ' + msg);
-    //return;
+    return;
 
     // WTF?  Should everything below this get axed? -- Zach
 
@@ -422,14 +425,17 @@ StatusNet.NewNoticeView.prototype.addAttachment = function(media) {
     // Width and height are passed on the event on Android,
     // but on the media blob on iPhone. Worse still, on Android
     // the blob has width/height properties which return 0.
-    var width = (media.width) ? media.width : event.width;
-    var height = (media.height) ? media.height : event.height;
-    //var width = (event.width) ? event.width : media.width;
-    //var height = (event.height) ? event.height : media.height;
+    var width = (media.width) ? media.width : this.event.width;
+    var height = (media.height) ? media.height : this.event.height;
+    StatusNet.debug('width:' + media.width+" height:"+media.height);
+    // var width = (event.width) ? event.width : media.width;
+    // var height = (event.height) ? event.height : media.height;
 
     // Scale images down to this maximum width.
     // @fixme resizing has some issues at the moment
     if (StatusNet.Platform.isApple()) {
+        var width = (media.width) ? media.width : this.event.width;
+        var height = (media.height) ? media.height : this.event.height;
         var maxSide = 800;
         var out = this.resizePhoto(media, width, height, maxSide);
         media = out.media;
