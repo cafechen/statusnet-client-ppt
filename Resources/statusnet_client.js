@@ -398,9 +398,9 @@ StatusNet.Client.prototype.switchViewInfo = function(view) {
     if(this.infoNavbar != null){
 			this.infoNavbar.view.show() ;
 			this.infoNavbar._label.show() ;
+		}else{
+			this.infoNavbar = StatusNet.Platform.createNavBar(this.mainwin, "新闻");
 		}
-    
-    this.infoNavbar = StatusNet.Platform.createNavBar(this.mainwin, "新闻");
     
     if(that.infoview == null){
 	    that.infoview = Titanium.UI.createWebView({
