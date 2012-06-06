@@ -89,14 +89,17 @@ StatusNet.createTabbedBar = function(tabInfo, win, initialSelection) {
             i++;
         }
     }
-
+		
+		/*
     var moretab = tb.createMiniTab({
         index: 2,
         deselectedImage: 'images/tabs/new/info.png',
         selectedImage: 'images/tabs/new/info_on.png',
         name: 'more'
     });
-    tb.tabs.push(moretab);
+    */
+    
+    //tb.tabs.push(moretab);
     win.add(tb.tabView);
 
     //if (initialSelection) {
@@ -117,7 +120,16 @@ StatusNet.TabbedMenuBar.prototype.setSelectedTab = function(index) {
         if (index === 2) {
             StatusNet.debug("show company info...");
             //moretab.backgroundImage = moretab.selectedImage;
-            this.showOverFlowWindow();
+            //this.showOverFlowWindow();
+            this.highlightTab(index);
+            var that = this;
+
+            StatusNet.debug("Tab selection - index = " + index + " name = " + this.tabs[index].name);
+            Titanium.App.fireEvent('StatusNet_tabSelectedInfo', {
+                index: index,
+                tabName: that.tabs[index].name
+            });
+            
         } else {
             this.highlightTab(index);
             this.isLoading = true;
