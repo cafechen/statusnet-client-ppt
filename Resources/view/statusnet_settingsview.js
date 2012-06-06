@@ -150,7 +150,14 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
         layout: 'vertical'
     });
     
-    window.add(workArea);
+    var scrollView = Titanium.UI.createScrollView({
+        width: '100%',
+        height: Titanium.Platform.displayCaps.platformHeight - navbar.height
+    });
+    
+    scrollView.add(workArea);
+    
+    window.add(scrollView);
     
     var register = Titanium.UI.createButton({
    		title: "注册",
@@ -295,6 +302,14 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
         register.fireEvent('click', {});
     });
     */
+   
+  	this.rfields.verifyPassword.addEventListener('focus', function() {
+    	scrollView.scrollTo(0, 40);
+		});
+   
+   	this.rfields.verifyCode.addEventListener('focus', function() {
+   		scrollView.scrollTo(0, 80);
+  	});
 
     this.rfields.status = Titanium.UI.createLabel({
         text: "",
@@ -432,7 +447,15 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         layout: 'vertical'
     });
     
-   	window.add(workArea);
+    var scrollView = Titanium.UI.createScrollView({
+        width: '100%',
+        contentHeight: 'auto',
+        height: Titanium.Platform.displayCaps.platformHeight - navbar.height,
+    });
+    
+    scrollView.add(workArea);
+    
+    window.add(scrollView);
 
     this.fields = {};
     var commonProps = {
@@ -499,6 +522,11 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         login.fireEvent('click', {});
     });
     */
+   
+   
+   	this.fields.password.addEventListener('focus', function() {
+   		scrollView.scrollTo(0, 40);  
+		});
 
     this.fields.status = Titanium.UI.createLabel({
         text: "",
