@@ -367,11 +367,11 @@ StatusNet.NewNoticeView.prototype.openAttachment = function(source, callback)
     var that = this;
     StatusNet.debug("QQQQQQ Getting attachment - source is: " + source);
     this.getPhoto(source, function(event) {
-        that.event = event;
+        // that.event = event;
         if (event.status == 'success') {
             StatusNet.debug('Photo attachment ok!');
             StatusNet.debug('width:' + event.width+" height:"+event.height);
-            that.addAttachment(event.media);
+            that.addAttachment(event);
         } else if (event.status == 'cancel') {
             StatusNet.debug('Photo attachment canceled.');
         } else if (event.status == 'error') {
@@ -389,7 +389,9 @@ StatusNet.NewNoticeView.prototype.getPhoto = function(source, callback) {
         success: function(event) {
             callback({
                 status: 'success',
-                media: event.media
+                media: event.media,
+                height: event.height,
+                width: event.width
             });
         },
         cancel: function(event) {
@@ -417,14 +419,14 @@ StatusNet.NewNoticeView.prototype.getPhoto = function(source, callback) {
     }
 };
 
-StatusNet.NewNoticeView.prototype.addAttachment = function(media) {
-    this.attachment = media;
+StatusNet.NewNoticeView.prototype.addAttachment = function(event) {
+    var media = this.attachment = event.media;
     var size = (StatusNet.Platform.isApple() ? media.size : media.length);
     StatusNet.debug('SIZE IS: ' + size);
     var msg = Math.round(size / 1024) + ' KB';
     this.attachInfo.text = msg;
     StatusNet.debug('QQQ: ' + msg);
-    return;
+    // return;
 
     // WTF?  Should everything below this get axed? -- Zach
 
@@ -441,23 +443,21 @@ StatusNet.NewNoticeView.prototype.addAttachment = function(media) {
     // Width and height are passed on the event on Android,
     // but on the media blob on iPhone. Worse still, on Android
     // the blob has width/height properties which return 0.
-    var width = (media.width) ? media.width : this.event.width;
-    var height = (media.height) ? media.height : this.event.height;
-    StatusNet.debug('width:' + media.width+" height:"+media.height);
+    var width = (media.width) ? media.width : event.width;
+    var height = (media.height) ? media.height : event.height;
+    // StatusNet.debug('width:' + media.width+" height:"+media.height);
     // var width = (event.width) ? event.width : media.width;
     // var height = (event.height) ? event.height : media.height;
 
     // Scale images down to this maximum width.
     // @fixme resizing has some issues at the moment
-    if (StatusNet.Platform.isApple()) {
-        var width = (media.width) ? media.width : this.event.width;
-        var height = (media.height) ? media.height : this.event.height;
+    // if (StatusNet.Platform.isApple()) {
         var maxSide = 800;
         var out = this.resizePhoto(media, width, height, maxSide);
         media = out.media;
         width = out.width;
         height = out.height;
-    }
+    // }
 
     /*
     StatusNet.debug('media.width = ' + media.width);
@@ -471,7 +471,7 @@ StatusNet.NewNoticeView.prototype.addAttachment = function(media) {
     // iPhone doesn't report back the new image type, but it's JPEG.
     //var type = (media.mimeType ? media.mimeType : 'image/jpeg');
     //msg = width + 'x' + height + ' ' + this.niceType(type);
-		size = (StatusNet.Platform.isApple() ? media.size : media.length);
+	size = (StatusNet.Platform.isApple() ? media.size : media.length);
     StatusNet.debug('SIZE IS: ' + size);
     msg = Math.round(size / 1024) + ' KB';
     this.attachment = media;
@@ -495,16 +495,16 @@ StatusNet.NewNoticeView.prototype.resizePhoto = function(media, width, height, m
     StatusNet.debug("Source image is " + width + "x" + height);
 
     var orig = {media: media, width: width, height: height};
-    if (StatusNet.Platform.isAndroid()) {
-        // Our resizing gimmick doesn't 100% work on Android yet.
-        // We end up with a PNG, and/or a spew of error messages
-        // about failed type conversions.
-        //
-        // Note that on iPhone we resize ok, but we have no way to
-        // specify the JPEG quality level and end up with a larger
-        // file than necessary.
-        return orig;
-    }
+    // if (StatusNet.Platform.isAndroid()) {
+        // // Our resizing gimmick doesn't 100% work on Android yet.
+        // // We end up with a PNG, and/or a spew of error messages
+        // // about failed type conversions.
+        // //
+        // // Note that on iPhone we resize ok, but we have no way to
+        // // specify the JPEG quality level and end up with a larger
+        // // file than necessary.
+        // return orig;
+    // }
 
     var base = width/320 ;
     var targetWidth = 320 ;
@@ -542,15 +542,15 @@ StatusNet.NewNoticeView.prototype.resizePhoto = function(media, width, height, m
     // Ye horrible hack!
     // on Android, the image conversion esplodes.
     // Try inserting it so it's live...
-    if (StatusNet.Platform.isAndroid()) {
-        this.window.add(imageView);
-    }
+    // if (StatusNet.Platform.isAndroid()) {
+        // this.window.add(imageView);
+    // }
     StatusNet.debug("QQQQQQQQQQQ B");
     var converted = imageView.toImage();
     StatusNet.debug("QQQQQQQQQQQ C");
-    if (StatusNet.Platform.isAndroid()) {
-        this.window.remove(imageView);
-    }
+    // if (StatusNet.Platform.isAndroid()) {
+        // this.window.remove(imageView);
+    // }
 
     // Then to add insult to injury, on Android it doesn't give us
     // a TiBlob directly, but rather an event object similar to when
