@@ -150,7 +150,14 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
         layout: 'vertical'
     });
     
-    window.add(workArea);
+    var scrollView = Titanium.UI.createScrollView({
+        width: '100%',
+        height: Titanium.Platform.displayCaps.platformHeight - navbar.height
+    });
+    
+    scrollView.add(workArea);
+    
+    window.add(scrollView);
     
     var register = Titanium.UI.createButton({
    		title: "注册",
@@ -295,6 +302,14 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
         register.fireEvent('click', {});
     });
     */
+   
+  	this.rfields.verifyPassword.addEventListener('focus', function() {
+    	scrollView.scrollTo(0, 40);
+		});
+   
+   	this.rfields.verifyCode.addEventListener('focus', function() {
+   		scrollView.scrollTo(0, 80);
+  	});
 
     this.rfields.status = Titanium.UI.createLabel({
         text: "",
@@ -432,7 +447,15 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         layout: 'vertical'
     });
     
-   	window.add(workArea);
+    var scrollView = Titanium.UI.createScrollView({
+        width: '100%',
+        contentHeight: 'auto',
+        height: Titanium.Platform.displayCaps.platformHeight - navbar.height,
+    });
+    
+    scrollView.add(workArea);
+    
+    window.add(scrollView);
 
     this.fields = {};
     var commonProps = {
@@ -499,6 +522,11 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         login.fireEvent('click', {});
     });
     */
+   
+   
+   	this.fields.password.addEventListener('focus', function() {
+   		scrollView.scrollTo(0, 40);  
+		});
 
     this.fields.status = Titanium.UI.createLabel({
         text: "",
@@ -805,7 +833,13 @@ StatusNet.SettingsView.prototype.getVerifyCode = function() {
     
     StatusNet.HttpClientPPT.send(url,function(status, responseObj, responseText){
     	StatusNet.debug("####ppt get verify code:" + responseObj.verify_code);
-    	that.rfields.status.text = "验证码获取成功！请等待短信。";
+    	//that.rfields.status.text = "验证码获取成功！请等待短信。";
+    	var errDialog = Titanium.UI.createAlertDialog({
+        title: '用户提示',
+        message: '验证码已成功发送至' + username + '！',
+        buttonNames: ['确认']
+      });
+      errDialog.show();
     },function(status, responseObj, responseText){
     	StatusNet.debug("####ppt get verify code:" + responseObj.verify_code+" status:"+status);
     	var errDialog = Titanium.UI.createAlertDialog({
@@ -814,13 +848,20 @@ StatusNet.SettingsView.prototype.getVerifyCode = function() {
             buttonNames: ['确认']
             });
     	if(status==201){
-    	    var errDialog = Titanium.UI.createAlertDialog({
+    	 	var errDialog = Titanium.UI.createAlertDialog({
             title: '用户提示',
             message: '此帐号已注册，新的验证码已用短信下发！',
             buttonNames: ['确认']
         });
+        errDialog.show();
     	}else{
-    	    that.rfields.status.text = "验证码获取失败！";
+    	    //that.rfields.status.text = "验证码获取失败！";
+    	    var errDialog = Titanium.UI.createAlertDialog({
+            title: '用户提示',
+            message: '验证码获取失败！',
+            buttonNames: ['确认']
+        	});
+        	errDialog.show();
     	}
     },params) ;
 };
@@ -899,7 +940,7 @@ StatusNet.SettingsView.prototype.register = function(view) {
         this.enableFields() ;
      	});
     },function(status, responseObj, responseText){
-    	StatusNet.debug("####ppt register response:" + responseText);
+    	StatusNet.debug("####ppt status:" + status);
     	this.enableFields() ;
     },params) ;
 };
