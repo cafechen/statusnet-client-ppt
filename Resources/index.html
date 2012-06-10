@@ -1,32 +1,32 @@
 <html>
-    <head>
-	    <link rel="stylesheet" href="display.css" type="text/css" charset="utf-8">
-	    <script type="text/javascript" src="jquery-1.4.2.min.js"></script>
-    </head>
-        <body>
-            <div id="content">
+<head>
+<meta charset="UTF-8">
 
-            </div>
+<title>福将碰碰头</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="css/page.css">
+</head>
+<body>
+<script>
+function switchToTimeLine(selected) {
+	Titanium.App.fireEvent('StatusNet_tabSelected', {
+    index: 0,
+    tabName: selected
+	});
+	return false;
+}
+</script>
+	
+<div class="header"><img src="images/title.png"></div>
+<div class="title">新产品分享平台</div>
 
-            <div id="aside_primary" class="aside">
-                <address>
-                    <img class="logo" src="logo.png"/>
-                </address>
-    <!--
-                <form id="form_notice">
-                        <textarea name="status_textarea" id="notice_data-text" rows="2" cols="20"/>
-                </form>
-    -->
-                <ul class="nav">
-                    <!-- replace with logged in user's avatar -->
-                    <li id="nav_timeline_personal"><a href="#" rel="external" title="Personal and friends">Personal</a></li>
+<div class="pro_info">
+	<ul>
+		<li class="info_2"><a href="#" onclick="switchToTimeLine('boss')">战报新鲜事</a>&nbsp;&nbsp;&nbsp;<span style="color:red">3</span></li>
+		<li class="info_3"><a href="#" onclick="switchToTimeLine('user')">我的新鲜事</a>&nbsp;&nbsp;&nbsp;<span style="color:red">0</span></li>
+		<li class="info_4"><a href="#" onclick="switchToTimeLine('friends')">上级新鲜事</a>&nbsp;&nbsp;&nbsp;<span style="color:red">10</span></li>
+	</ul>
+</div>
 
-                    <!-- show only if logged in -->
-                    <li id="nav_timeline_replies"><a href="#" rel="external" title="Replies to you">Replies</a></li>
-                    <li id="nav_timeline_favorites"><a href="#" rel="external" title="Your favourites">Favorites</a></li>
-                    <li id="nav_timeline_public"><a href="#" rel="external" title="Public timeline">Public</a></li>
-                </ul>
-            </div>
-
-        </body>
+</body>
 </html>

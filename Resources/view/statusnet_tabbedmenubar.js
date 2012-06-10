@@ -117,7 +117,7 @@ StatusNet.TabbedMenuBar.prototype.setSelectedTab = function(index) {
 
         var moretab = this.tabs[2];
 
-        if (index === 2) {
+        if (index === 1) {
             StatusNet.debug("show company info...");
             //moretab.backgroundImage = moretab.selectedImage;
             //this.showOverFlowWindow();
@@ -130,7 +130,20 @@ StatusNet.TabbedMenuBar.prototype.setSelectedTab = function(index) {
                 tabName: that.tabs[index].name
             });
             
-        } else {
+        } else if (index === 2) {
+            StatusNet.debug("show company index...");
+            //moretab.backgroundImage = moretab.selectedImage;
+            //this.showOverFlowWindow();
+            this.highlightTab(index);
+            var that = this;
+
+            StatusNet.debug("Tab selection - index = " + index + " name = " + this.tabs[index].name);
+            Titanium.App.fireEvent('StatusNet_tabSelectedIndex', {
+                index: index,
+                tabName: that.tabs[index].name
+            });
+            
+        }else {
             this.highlightTab(index);
             this.isLoading = true;
             var that = this;

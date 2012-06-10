@@ -38,6 +38,7 @@ StatusNet.Client = function(_account) {
     this.infoview = null ;
     this.webViewReady = false;
     this.infoNavbar = null ;
+    this.indexNavbar = null ;
     this.newNoticeView = null;
     this.accountView = null;
     this.isRefreshing = false; // Are we doing pull-to-refresh or load more?
@@ -190,6 +191,11 @@ StatusNet.Client.prototype.initInternalListeners = function() {
         that.setAccountLabel(event.tabName);
         that.switchViewInfo(event.tabName);
     });
+    Ti.App.addEventListener('StatusNet_tabSelectedIndex', function(event) {
+        StatusNet.debug('Event: ' + event.tabName);
+        that.setAccountLabel(event.tabName);
+        that.switchViewIndex(event.tabName);
+    });
     Ti.App.addEventListener('StatusNet_subscribe', function(event) {
         StatusNet.debug('Event: ' + event);
         that.subscribe(event.userId, function() {
@@ -265,7 +271,7 @@ StatusNet.Client.prototype.initInternalListeners = function() {
     });
     Ti.App.addEventListener('StatusNet_timelineFinishedUpdate', function(event) {
         StatusNet.debug('statusnet_client  StatusNet_timelineFinishedUpdate.....');
-        that.toolbar.isLoading = false;
+        //that.toolbar.isLoading = false;
     });
     Ti.App.addEventListener('StatusNet_viewAttachImage', function(event) {
         StatusNet.debug('statusnet_client  StatusNet_viewAttachImage..... '+event.imgSrc);
@@ -295,6 +301,15 @@ StatusNet.Client.prototype.switchView = function(view) {
 		if(this.infoNavbar != null){
 			this.infoNavbar.view.hide() ;
 			this.infoNavbar._label.hide() ;
+		}
+		
+		if(this.indexview != null){
+			this.indexview.visible = false ;
+		}
+		
+		if(this.indexNavbar != null){
+			this.indexNavbar.view.hide() ;
+			this.indexNavbar._label.hide() ;
 		}
 
     if (this.account) {
@@ -330,6 +345,9 @@ StatusNet.Client.prototype.switchView = function(view) {
         case 'user':
             this.switchUserTimeline();
             return;
+       	case 'boss':
+            this.switchUserTimeline(15);
+            return;
         case "friends":
             this.timeline = new StatusNet.TimelineFriends(this);
             this.view = new StatusNet.TimelineViewFriends(this);
@@ -357,6 +375,10 @@ StatusNet.Client.prototype.switchView = function(view) {
             this.view = new StatusNet.TimelineViewSearch(this);
             break;
        	case 'info':
+            //this.timeline = new StatusNet.TimelineSearch(this);
+            //this.view = new StatusNet.TimelineViewSearch(this);
+           	break ;
+       	case 'index':
             //this.timeline = new StatusNet.TimelineSearch(this);
             //this.view = new StatusNet.TimelineViewSearch(this);
            	break ;
@@ -407,7 +429,7 @@ StatusNet.Client.prototype.switchViewInfo = function(view) {
 	      top: that.navbar.height,
 	      left: 0,
 	      right: 0,
-	      bottom: this.toolbar.height,
+	      bottom: 0, //this.toolbar.height,
 	      scalesPageToFit: false,
 	      url: "http://a.pengpengtou.com/info.html",
 	      backgroundColor: 'white'
@@ -417,6 +439,84 @@ StatusNet.Client.prototype.switchViewInfo = function(view) {
     }
     
     that.mainwin.add(that.infoview);
+    
+    StatusNet.debug('timeline updated.');
+};
+
+StatusNet.Client.prototype.switchViewIndex = function(view) {
+
+    var that = this;
+    
+    if(this.indexNavbar != null){
+			this.indexNavbar.view.show() ;
+			this.indexNavbar._label.show() ;
+		}else{
+			this.indexNavbar = StatusNet.Platform.createNavBar(this.mainwin, "福将碰碰头");
+		}
+		
+		var updateButton = Titanium.UI.createButton({
+    	width: 40,
+    	height: 40,
+     	top: 2
+    });
+    if (StatusNet.Platform.isApple()) {
+     	// iPhone has a nice system icon we can use here...
+    	updateButton.systemButton = Titanium.UI.iPhone.SystemButton.COMPOSE;
+    } else {
+        // @fixme check for 240dpi version
+      updateButton.backgroundImage = 'images/new_button.png';
+      //updateButton.backgroundSelectedImage = 'images/new_button-on.png';
+      var glowy = new StatusNet.Glowy(this.indexNavbar.view, updateButton);
+      // backgroundSelectedImage seems to be broken by our touch handlers
+      // for the glowy effect, so let's add more to fake it. :D
+      updateButton.addEventListener('touchstart', function() {
+          updateButton.backgroundImage = 'images/new_button-on.png';
+      });
+      updateButton.addEventListener('touchend', function() {
+          updateButton.backgroundImage = 'images/new_button.png';
+      });
+      updateButton.addEventListener('touchcancel', function() {
+          updateButton.backgroundImage = 'images/new_button.png';
+      });
+    }
+
+    updateButton.addEventListener('click', function() {
+   		that.newNoticeDialog();
+    });
+    
+  	this.indexNavbar.setLeftNavButton(updateButton);
+        
+    var logoutButton = Titanium.UI.createButton({
+        width: 70,
+        top: 0,
+        bottom: 0,
+        title: "登出"
+    });
+    
+    logoutButton.addEventListener('click', function() {
+        StatusNet.debug("logout click......");
+        StatusNet.debug('showSettings!');
+        that.account.deleteAccount();
+        that.showSettingsView();
+    });
+    
+    this.indexNavbar.setRightNavButton(logoutButton);
+    
+    if(that.indexview == null){
+	    that.indexview = Titanium.UI.createWebView({
+	      top: that.navbar.height,
+	      left: 0,
+	      right: 0,
+	      bottom: 0,
+	      scalesPageToFit: false,
+	      url: "index.html",
+	      backgroundColor: 'white'
+	    });
+    }else{
+    	that.indexview.visible = true ;
+    }
+    
+    that.mainwin.add(that.indexview);
     
     StatusNet.debug('timeline updated.');
 };
@@ -545,7 +645,7 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
 
         var selfLabel = this.selfLabel = Titanium.UI.createLabel({
             left: 110,
-            right: 30,
+            right: 60,
             top: 0,
             bottom: 0,
             color: "white",
@@ -554,8 +654,33 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
             },
             minimumFontSize: 8 // This has no effect on Android; we have a hack in setAccountLabel below.
         });
+        
+        selfLabel.addEventListener('click', function() {
+		   		var picker = new StatusNet.Picker({
+	        });
+        	picker.add('战报新鲜事', function() {
+          	//Titanium.UI.Clipboard.setText(text);
+          	that.setAccountLabel('boss');
+          	that.switchView('boss') ;
+         	})
+         	picker.add('我的新鲜事', function() {
+          	//Titanium.UI.Clipboard.setText(text);
+          	that.setAccountLabel('user');
+          	that.switchView('user') ;
+         	})
+         	picker.add('上级新鲜事', function() {
+          	//Titanium.UI.Clipboard.setText(text);
+          	that.setAccountLabel('friends');
+          	that.switchView('friends') ;
+         	})
+         	picker.add('返回', function() {
+          	//Titanium.UI.Clipboard.setText(text);
+         	})
+	        //picker.addCancel();
+	        picker.show();
+		    });
 
-        this.setAccountLabel('friends');
+        this.setAccountLabel('index');
         this.navbar.view.add(selfLabel);
 
         var updateButton = Titanium.UI.createButton({
@@ -590,19 +715,17 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
         });
         this.navbar.setLeftNavButton(updateButton);
         
-        var logoutButton = Titanium.UI.createButton({
+        var backButton = Titanium.UI.createButton({
             width: 70,
             top: 0,
             bottom: 0,
-            title: "登出"
+            title: "返回"
         });
-        logoutButton.addEventListener('click', function() {
-            StatusNet.debug("logout click......");
-            StatusNet.debug('showSettings!');
-            that.account.deleteAccount();
-            that.showSettingsView();
+        
+        backButton.addEventListener('click', function() {
+            that.switchViewIndex('index') ;
         });
-        this.navbar.setRightNavButton(logoutButton);
+        this.navbar.setRightNavButton(backButton);
 
         var tabinfo = {
             
@@ -611,15 +734,15 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
                 selectedImage: 'images/tabs/new/friends_on.png',
                 name: 'friends'
             },
-            'user': {
-                deselectedImage: 'images/tabs/new/public.png',
-                selectedImage: 'images/tabs/new/public_on.png',
-                name: 'user'
-            },
             'info': {
                 deselectedImage: 'images/tabs/new/info.png',
                 selectedImage: 'images/tabs/new/info_on.png',
                 name: 'info'
+            },
+            'index': {
+                deselectedImage: 'images/tabs/new/info.png',
+                selectedImage: 'images/tabs/new/info_on.png',
+                name: 'index'
             }
             // 'search': {deselectedImage: 'images/tabs/new/search.png', selectedImage: 'images/tabs/new/search_on.png', name: 'search'}
         };
@@ -632,13 +755,13 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
             };
         }
 
-        this.toolbar = StatusNet.createTabbedBar(tabinfo, this.mainwin, 0);
+        //this.toolbar = StatusNet.createTabbedBar(tabinfo, this.mainwin, 0);
 
         this.webview = Titanium.UI.createWebView({
             top: that.navbar.height,
             left: 0,
             right: 0,
-            bottom: this.toolbar.height,
+            bottom: 0, //this.toolbar.height,
             scalesPageToFit: false,
             url: "timeline.html",
             backgroundColor: 'white'
@@ -652,7 +775,7 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
             if (!that.webViewReady) {
                 that.webViewReady = true;
                 StatusNet.debug('initAccountView triggering timeline setup...');
-                that.switchView('friends');
+                that.switchViewIndex('index');
             }
         };
         Titanium.App.addEventListener('StatusNet_timelineReady', onReady);
@@ -674,16 +797,16 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
             });
             */
             StatusNet.debug('ALL DONE waiting');
-            that.setAccountLabel('user');
-            that.toolbar.highlightTab(1);
-            that.switchView('user');
+            that.setAccountLabel('index');
+            //that.toolbar.highlightTab(1);
+            that.switchViewIndex('index');
         });
         this.mainwin.open();
         StatusNet.debug('initAccountView delaying to wait for timeline...');
     } else {
-        this.setAccountLabel('friends');
-        this.toolbar.highlightTab(0);
-        this.switchView('friends');
+        this.setAccountLabel('index');
+        //this.toolbar.highlightTab(0);
+        this.switchViewIndex('index');
         StatusNet.debug('initAccountView DONE!');
     }
 
@@ -695,13 +818,18 @@ StatusNet.Client.prototype.setAccountLabel = function(name) {
     switch (name) {
 
         case 'user':
-            this.selfLabel.text = "我的分享";
+            this.selfLabel.text = "我的新鲜事";
             break;
         case "friends":
-            this.selfLabel.text = "我的新鲜事";
+            this.selfLabel.text = "上级新鲜事";
             break;
        	case "info":
             this.selfLabel.text = "新闻";
+            break;
+       	case "index":
+            this.selfLabel.text = "福将碰碰头";
+        case "boss":
+        		this.selfLabel.text = "战报新鲜事"
             break;
         default:
             throw "Gah wrong timeline";
@@ -1178,7 +1306,7 @@ StatusNet.Client.prototype.showDeveloperTools = function() {
     dialog.add('Blank timeline', function() {
         that.selfAvatar.image = null;
         that.selfLabel.text = '';
-        that.toolbar.highlightTab(-1);
+        //that.toolbar.highlightTab(-1);
         that.view.clearTimelineView();
     });
     dialog.addCancel();

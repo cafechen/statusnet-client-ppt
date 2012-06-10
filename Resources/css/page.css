@@ -1,0 +1,23 @@
+﻿body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,code,form,fieldset,legend,input,button,textarea,p,blockquote,th,td{margin:0;padding:0;}
+.header{height:100px;background:#5199ba;text-align:center;}
+.header img{width:260px;margin:0 auto;display:inline-block;}
+.download_area{height:200px;}
+.pro_info{margin-top:20px;}
+.pro_info ul li{clear:both;height:80px;list-style:none;padding:0 20px 0 100px;}
+.pro_info ul li.info_1{background:url(../images/icon1.png) 30px 0 no-repeat;}
+.pro_info ul li.info_2{background:url(../images/icon2.png) 30px 0 no-repeat;}
+.pro_info ul li.info_3{background:url(../images/icon3.png) 30px 0 no-repeat;}
+.pro_info ul li.info_4{background:url(../images/icon4.png) 30px 0 no-repeat;}
+.pro_info ul li.info_5{background:url(../images/icon5.png) 30px 0 no-repeat;}
+.pro_info ul li h4{font-size:18px;}
+.pro_info ul li p{color:#666;font-weight:bold;}
+.download_inner{background:#ededed;padding:20px 30px;}
+.download_inner h3{font-size:21px;}
+.download_inner a{width:261px;height:73px;display:block;text-indent:-9999px;margin-top:20px;}
+.title{background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, rgb(255,255,255)),color-stop(1, rgb(231,231,231)));background-image: -webkit-linear-gradient(top, rgb(255,255,255) 0%, rgb(231,231,231) 100%);background-image: -moz-linear-gradient(top, rgb(255,255,255) 0%, rgb(231,231,231) 100%);background-image: -ms-linear-gradient(top, rgb(255,255,255) 0%, rgb(231,231,231) 100%);background-image: -o-linear-gradient(top, rgb(255,255,255) 0%, rgb(231,231,231) 100%);background-image:linear-gradient(top, rgb(255,255,255) 0%, rgb(231,231,231) 100%);line-height:30px;padding:0 30px;font-weight:bold;border-top:1px solid #ededed;}
+.footer{border-top:1px solid #ededed;padding:30px;font-size:16px;font-weight:bold;line-height:28px;}
+.footer a{color:#27528d;text-decoration:none;}
+.user_list{padding:10px 30px;}
+.user_list ul li{list-style:none;margin-bottom: 16px;}
+.user_list ul li img{float:left;margin-right:10px;}
+.user_list ul li span{display:block;}
