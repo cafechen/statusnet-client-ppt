@@ -419,7 +419,7 @@ enableNoticeControls = function(noticeDom) {
     var noticeId = name.substring(7); // notice-
 
     name = $notice.find('a.author').attr('name');
-    var authorId = name.substring(7); // author-
+    authorId = name.substring(7); // author-
 
     var noticeAuthor = $notice.find('a.author').text();
     
@@ -441,7 +441,8 @@ enableNoticeControls = function(noticeDom) {
 
         //$notice.find('div.avatar a').attr('href', "#");
         $notice.find('div.avatar').bind('click', function(event) {
-            Titanium.App.fireEvent("StatusNet_switchUserTimeline", {authorId: authorId});
+            Titanium.API.debug('avatarImg is clicked...');
+            // Titanium.App.fireEvent("StatusNet_switchUserTimeline", {authorId: authorId});
             return false;
         });
     }
@@ -557,6 +558,11 @@ enableNoticeControls = function(noticeDom) {
 
 };
 
+showChooseHeadDialog = function(){
+    Titanium.API.debug('showChooseHeadDialog entered...');
+    Titanium.App.fireEvent("StatusNet_showChooseHeadDialog", {authorId: authorId});
+}
+
 renderDirectMessage = function(dm) {
 
     var html = [];
@@ -624,7 +630,7 @@ showProfileHeader = function(user, extended, authorId) {
     var html = [];
 
     html.push('<div id="profile_panel">');
-    html.push('<img src="' + user.avatarLarge + '"/>');
+    html.push('<img src="' + user.avatarLarge + '" onclick="showChooseHeadDialog()"/>');
 
     if (extended) {
         Titanium.API.debug("showProfileInfo() - found extended");

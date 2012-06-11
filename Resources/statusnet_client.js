@@ -278,6 +278,11 @@ StatusNet.Client.prototype.initInternalListeners = function() {
         
         that.initAttachViewer(event.imgSrc);
     });
+    Ti.App.addEventListener('StatusNet_showChooseHeadDialog', function(event) {
+        StatusNet.debug('statusnet_client  StatusNet_showChooseHeadDialog..... authorId:'+event.authorId);
+        // that.initAttachViewer(event.imgSrc);
+        that.showChooseHeadDialog();
+    });
     Titanium.Gesture.addEventListener('orientationchange', function(event) {
         Titanium.App.fireEvent('StatusNet_orientationChange', {
             orientation: event.orientation
@@ -1311,4 +1316,118 @@ StatusNet.Client.prototype.showDeveloperTools = function() {
     });
     dialog.addCancel();
     dialog.show();
+};
+
+StatusNet.Client.prototype.showChooseHeadDialog = function()
+{
+    Titanium.API.debug('showChooseHeadDialog entered...');
+    var that = this;
+
+        var options = [];
+        var callbacks = [];
+        var destructive = -1;
+
+            if (StatusNet.Platform.hasCamera()) {
+                options.push('拍照');
+                callbacks.push(function() {
+                    that.copenAttachment('camera', function() {
+                        // that.focus();
+                    });
+                });
+            }
+
+            options.push('图片');
+            callbacks.push(function() {
+                that.copenAttachment('gallery', function() {
+                    // that.focus();
+                });
+            });
+
+        var cancel = options.length;
+        options.push('返回');
+        callbacks.push(function() {
+            // that.focus();
+        });
+
+        var dialog = Titanium.UI.createOptionDialog({
+            title: '附件',
+            options: options,
+            cancel: cancel
+        });
+        if (destructive > -1) {
+            dialog.destructive = destructive;
+        }
+        dialog.addEventListener('click', function(event) {
+            if (event.index !== undefined && callbacks[event.index] !== undefined) {
+                callbacks[event.index]();
+            }
+        });
+        dialog.show();
+};
+
+StatusNet.Client.prototype.copenAttachment = function(source, callback)
+{
+    StatusNet.debug("QQQQQQ openAttachment");
+    if (StatusNet.Platform.isAndroid()) {
+        if (!Ti.Filesystem.isExternalStoragePresent) {
+            alert('SD card is missing or unmounted. Check card and try again.');
+            return;
+        }
+    }
+    var that = this;
+    StatusNet.debug("QQQQQQ Getting attachment - source is: " + source);
+    that.cgetPhoto(source, function(event) {
+        // that.event = event;
+        StatusNet.debug('callback entered!');
+        if (event.status == 'success') {
+            StatusNet.debug('Photo attachment ok!');
+            StatusNet.debug('width:' + event.width+" height:"+event.height);
+            that.addAttachment(event);
+        } else if (event.status == 'cancel') {
+            StatusNet.debug('Photo attachment canceled.');
+        } else if (event.status == 'error') {
+            StatusNet.debug('Photo attachment failed: ' + event.msg);
+            alert('Photo fetch failed: ' + event.msg);
+        } else {
+            StatusNet.debug('Got unexpected event from photo helper.');
+        }
+        callback(event);
+    });
+};
+
+StatusNet.Client.prototype.cgetPhoto = function(source, callback) {
+    StatusNet.debug('getPhoto entered!');
+    var options = {
+        success: function(event) {
+            StatusNet.debug('success......');
+            callback({
+                status: 'success',
+                media: event.media,
+                height: event.height,
+                width: event.width
+            });
+        },
+        cancel: function(event) {
+            callback({
+                status: 'cancel'
+            });
+        },
+        error: function(event) {
+            callback({
+                status: 'error',
+                media: event.msg
+            });
+        },
+        autohide: true,
+        animated: true
+    };
+
+    if (source == 'camera') {
+        trigger = Titanium.Media.showCamera(options);
+    } else if (source == 'gallery') {
+        Titanium.Media.openPhotoGallery(options);
+    } else {
+        Titanium.API.error("Unrecognized camera source. wtf!");
+        alert("Bad photo source event. This is a bug!");
+    }
 };
