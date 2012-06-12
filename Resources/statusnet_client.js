@@ -252,6 +252,14 @@ StatusNet.Client.prototype.initInternalListeners = function() {
             });
         });
     });
+    Ti.App.addEventListener('StatusNet_indexRefresh', function(event) {
+        StatusNet.debug('Event: ' + event);
+        // Don't show the regular spinner if the pull-to-refresh spinner is running
+        if (!event.showSpinner) {
+            that.isRefreshing = true;
+        }
+        that.switchViewIndex('index') ;
+    });
     Ti.App.addEventListener('StatusNet_timelineLoadMore', function(event) {
         StatusNet.debug('Event: ' + event);
         StatusNet.debug("Got request for older notices from webview, retrieving...");
@@ -459,6 +467,12 @@ StatusNet.Client.prototype.switchViewIndex = function(view) {
 	var that = this;
 	StatusNet.HttpClientPPT.getHTML("http://p.pengpengtou.com/info/index/userid/" + this.account.username,function(status, responseText){
   	StatusNet.debug("####response :" + responseText + ":" + status);
+  	Titanium.App.fireEvent('StatusNet_indexFinishedUpdate', {
+            view: view
+        });
+        if (that.loadedSound) {
+                that.loadedSound.play();
+            }
   	var html = responseText ;
   	that.showViewIndex(html)
   },function (){
