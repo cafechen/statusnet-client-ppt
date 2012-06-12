@@ -186,6 +186,11 @@ StatusNet.Client.prototype.initInternalListeners = function() {
         that.setAccountLabel(event.tabName);
         that.switchView(event.tabName);
     });
+    Ti.App.addEventListener('StatusNet_tabSelectedUser', function(event) {
+        StatusNet.debug('Event: ' + event.tabName);
+        that.setAccountLabel(event.tabName + "新鲜事");
+        that.switchView(event.index);
+    });
     Ti.App.addEventListener('StatusNet_tabSelectedInfo', function(event) {
         StatusNet.debug('Event: ' + event.tabName);
         that.setAccountLabel(event.tabName);
@@ -350,9 +355,6 @@ StatusNet.Client.prototype.switchView = function(view) {
         case 'user':
             this.switchUserTimeline();
             return;
-       	case 'boss':
-            this.switchUserTimeline(15);
-            return;
         case "friends":
             this.timeline = new StatusNet.TimelineFriends(this);
             this.view = new StatusNet.TimelineViewFriends(this);
@@ -388,7 +390,12 @@ StatusNet.Client.prototype.switchView = function(view) {
             //this.view = new StatusNet.TimelineViewSearch(this);
            	break ;
         default:
-            throw "Gah wrong timeline";
+        		if(!isNaN(view)){
+        			this.switchUserTimeline(view);
+        			return;
+        		}else{
+            	throw "Gah wrong timeline " + view;
+            }
     }
 
     StatusNet.debug("Initializing view...");
@@ -449,6 +456,17 @@ StatusNet.Client.prototype.switchViewInfo = function(view) {
 };
 
 StatusNet.Client.prototype.switchViewIndex = function(view) {
+	var that = this;
+	StatusNet.HttpClientPPT.getHTML("http://p.pengpengtou.com/info/index/userid/" + this.account.username,function(status, responseText){
+  	StatusNet.debug("####response :" + responseText + ":" + status);
+  	var html = responseText ;
+  	that.showViewIndex(html)
+  },function (){
+  	
+  },null)
+};
+
+StatusNet.Client.prototype.showViewIndex = function(html) {
 
     var that = this;
     
@@ -514,7 +532,9 @@ StatusNet.Client.prototype.switchViewIndex = function(view) {
 	      right: 0,
 	      bottom: 0,
 	      scalesPageToFit: false,
-	      url: "index.html",
+	      //html: "http://p.pengpengtou.com/info/index/userid/" + this.account.username,
+	      html: html,
+	      //url: "index.html",
 	      backgroundColor: 'white'
 	    });
     }else{
@@ -661,29 +681,25 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
         });
         
         selfLabel.addEventListener('click', function() {
-		   		var picker = new StatusNet.Picker({
-	        });
-        	picker.add('战报新鲜事', function() {
-          	//Titanium.UI.Clipboard.setText(text);
-          	that.setAccountLabel('boss');
-          	that.switchView('boss') ;
-         	})
-         	picker.add('我的新鲜事', function() {
-          	//Titanium.UI.Clipboard.setText(text);
-          	that.setAccountLabel('user');
-          	that.switchView('user') ;
-         	})
-         	picker.add('上级新鲜事', function() {
-          	//Titanium.UI.Clipboard.setText(text);
-          	that.setAccountLabel('friends');
-          	that.switchView('friends') ;
-         	})
-         	picker.add('返回', function() {
-          	//Titanium.UI.Clipboard.setText(text);
-         	})
-	        //picker.addCancel();
-	        picker.show();
-		    });
+        	StatusNet.HttpClientPPT.send("http://p.pengpengtou.com/api/user_select/userid/" + that.account.username, function(status,reponseObj,responseText) {
+			   		StatusNet.debug('###ppt reponseObj:' + reponseObj.length) ;
+			   		var picker = new StatusNet.Picker({
+		      	});
+			   		for(var i = 0; i < reponseObj.length; i++){
+			   			picker.add(reponseObj[i]['name'] + '新鲜事', function(_index){
+			   				var user = reponseObj[_index] ;
+		        		that.setAccountLabel(user['name'] + '新鲜事');
+		        		that.switchView(user['id']) ;
+		       		});
+			   		};
+		       	picker.add('返回', function() {
+		        	//Titanium.UI.Clipboard.setText(text);
+		       	});
+		        //picker.addCancel();
+		        picker.show();
+		    },function(){
+		    	
+		    },null)});
 
         this.setAccountLabel('index');
         this.navbar.view.add(selfLabel);
@@ -718,7 +734,7 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
         updateButton.addEventListener('click', function() {
             that.newNoticeDialog();
         });
-        this.navbar.setLeftNavButton(updateButton);
+        this.navbar.setRightNavButton(updateButton);
         
         var backButton = Titanium.UI.createButton({
             width: 70,
@@ -730,7 +746,7 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
         backButton.addEventListener('click', function() {
             that.switchViewIndex('index') ;
         });
-        this.navbar.setRightNavButton(backButton);
+        this.navbar.setLeftNavButton(backButton);
 
         var tabinfo = {
             
@@ -834,10 +850,11 @@ StatusNet.Client.prototype.setAccountLabel = function(name) {
        	case "index":
             this.selfLabel.text = "福将碰碰头";
         case "boss":
-        		this.selfLabel.text = "战报新鲜事"
+        		this.selfLabel.text = "战报新鲜事";
             break;
         default:
-            throw "Gah wrong timeline";
+            //throw "Gah wrong timeline";
+            this.selfLabel.text = name;
      }
     
      this.selfLabel.font = {

@@ -93,3 +93,79 @@ StatusNet.HttpClientPPT.send = function(url, onSuccess, onError, data) {
         onError('exception', null, e);
     }
 };
+
+StatusNet.HttpClientPPT.getHTML = function(url, onSuccess, onError, data) {
+
+    StatusNet.debug("in post");
+
+    try {
+
+        var client = Titanium.Network.createHTTPClient();
+        client.setTimeout(600000); // 1 min timeout to help with poor connectivity
+
+        client.onload = function() {
+        	
+        		StatusNet.debug("####ppt webRequest: in onload");
+
+            StatusNet.debug("####ppt webRequest: in onload, before parse " + this.status);
+
+            var responseHtml = this.responseText ;
+            
+            var type = client.getResponseHeader('Content-Type');
+            
+            StatusNet.debug("####ppt webRequest: in onload, the type: " + type);
+            
+            StatusNet.debug("####ppt webRequest: in onload, responseHtml: " + responseHtml);
+            
+            if (this.status == 200) {
+                StatusNet.debug("####ppt webRequest: calling onSuccess");
+                onSuccess(this.status, responseHtml);
+                StatusNet.debug("####ppt webRequest: after onSuccess");
+
+            } else {
+                StatusNet.debug("####ppt webRequest: calling onError");
+                onError(this.status, responseHtml);
+            }
+            StatusNet.debug("####ppt webRequest: done with onload.");
+        };
+
+        // @fixme Hack to work around bug in the Titanium Desktop 1.2.1
+        // onload will not fire unless there a function assigned to
+        // onreadystatechange.
+        client.onreadystatechange = function() {
+            // NOP
+        };
+
+        // XXX: client.onerror is only called by mobile's HTTPClient
+        client.onerror = function(e) {
+            StatusNet.debug("####ppt webRequest: failure! " + e.error);
+            onError(client.status, null, "Error: " + e.error);
+        };
+
+        if (data) {
+            StatusNet.debug("####ppt HTTP POST to: " + url);
+            client.open("POST", url);
+        } else {
+            StatusNet.debug("####ppt HTTP GET to: " + url);
+            client.open("GET", url);
+        }
+
+        if (data) {
+            StatusNet.debug('####ppt webRequest: sending data: ' + data);
+            // Titanium Mobile/iPhone doesn't set Content-Type, which breaks PHP's processing.
+            if (typeof data == "string") {
+                client.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                //client.setRequestHeader('Content-Type', 'multipart/form');
+            }
+            client.send(data);
+            //client.send(StatusNet.HttpClient.formData(data));
+        } else {
+            client.send();
+        }
+
+    } catch (e) {
+        StatusNet.debug('####ppt webRequest: HTTP client exception: ' + e);
+        onError('exception', null, e);
+    }
+};
+

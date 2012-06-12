@@ -644,6 +644,8 @@ StatusNet.SettingsView.prototype.verifyAccount = function(onSuccess, onError) {
             that.fields.status.text = "认证通过.";
 
             that.workAcct.avatar = $(xml).find('user > profile_image_url').text();
+            that.workAcct.id = $(xml).find('user > id').text();
+            StatusNet.debug("####ppt ... userId: " + that.workAcct.id);
 
             // get site specific configuration info
             that.workAcct.apiGet('statusnet/config.xml', function(status, xml) {

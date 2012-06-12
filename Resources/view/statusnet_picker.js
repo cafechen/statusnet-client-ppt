@@ -63,7 +63,7 @@ StatusNet.Picker.prototype.show = function() {
     dialog.addEventListener('click', function(event) {
         var i = event.index;
         if (i >= 0 && i < callbacks.length && callbacks[i]) {
-            callbacks[i]();
+            callbacks[i](i);
         }
     });
     dialog.show();
