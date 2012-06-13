@@ -559,8 +559,7 @@ enableNoticeControls = function(noticeDom) {
 };
 
 showChooseHeadDialog = function(){
-    Titanium.API.debug('showChooseHeadDialog entered...');
-    Titanium.App.fireEvent("StatusNet_showChooseHeadDialog", {authorId: authorId});
+	Titanium.App.fireEvent("StatusNet_showChooseHeadDialog", {"foo": "bar"});
 }
 
 renderDirectMessage = function(dm) {
@@ -630,7 +629,14 @@ showProfileHeader = function(user, extended, authorId) {
     var html = [];
 
     html.push('<div id="profile_panel">');
-    html.push('<img src="' + user.avatarLarge + '" onclick="showChooseHeadDialog()"/>');
+    Titanium.API.debug('user.username' + user.username + " account.username" + account.usernam);
+    if (user.nickname == account.username) {
+    	Titanium.API.debug('<img src="' + user.avatarLarge + '" onclick="showChooseHeadDialog()"/>');
+    	html.push('<img src="' + user.avatarLarge + '" onclick="showChooseHeadDialog()"/>');
+    }else{
+    	Titanium.API.debug('<img src="' + user.avatarLarge + '"/>');
+    	html.push('<img src="' + user.avatarLarge + '" onclick="showChooseHeadDialog()"/>');
+  	}
 
     if (extended) {
         Titanium.API.debug("showProfileInfo() - found extended");

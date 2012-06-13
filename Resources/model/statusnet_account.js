@@ -273,7 +273,6 @@ StatusNet.Account.prototype.apiUploadFile = function(path, onSuccess, onError, o
     });
 };
 
-
 /**
  * Make sure we've recorded account credentials to the local database.
  * If not already done, saves them.

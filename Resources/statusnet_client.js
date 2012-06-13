@@ -43,7 +43,11 @@ StatusNet.Client = function(_account) {
     this.accountView = null;
     this.isRefreshing = false; // Are we doing pull-to-refresh or load more?
     this.init();
-
+		
+		this.sent = new StatusNet.Event();
+    this.onClose = new StatusNet.Event();
+    this.currTabName = null ;
+   	this.currAccount = null ;
 };
 
 StatusNet.Client.prototype.getActiveAccount = function() {
@@ -183,21 +187,29 @@ StatusNet.Client.prototype.initInternalListeners = function() {
     });
     Ti.App.addEventListener('StatusNet_tabSelected', function(event) {
         StatusNet.debug('Event: ' + event.tabName);
+        that.currTabName = event.tabName ;
+   			that.currAccount = event.tabName ;
         that.setAccountLabel(event.tabName);
         that.switchView(event.tabName);
     });
     Ti.App.addEventListener('StatusNet_tabSelectedUser', function(event) {
         StatusNet.debug('Event: ' + event.tabName);
+        that.currTabName = event.tabName ;
+   			that.currAccount = event.index ;
         that.setAccountLabel(event.tabName + "新鲜事");
         that.switchView(event.index);
     });
     Ti.App.addEventListener('StatusNet_tabSelectedInfo', function(event) {
         StatusNet.debug('Event: ' + event.tabName);
+        that.currTabName = event.tabName ;
+   			that.currAccount = event.tabName ;
         that.setAccountLabel(event.tabName);
         that.switchViewInfo(event.tabName);
     });
     Ti.App.addEventListener('StatusNet_tabSelectedIndex', function(event) {
         StatusNet.debug('Event: ' + event.tabName);
+        that.currTabName = event.tabName ;
+   			that.currAccount = event.tabName ;
         that.setAccountLabel(event.tabName);
         that.switchViewIndex(event.tabName);
     });
@@ -292,9 +304,9 @@ StatusNet.Client.prototype.initInternalListeners = function() {
         that.initAttachViewer(event.imgSrc);
     });
     Ti.App.addEventListener('StatusNet_showChooseHeadDialog', function(event) {
-        StatusNet.debug('statusnet_client  StatusNet_showChooseHeadDialog..... authorId:'+event.authorId);
+        StatusNet.debug('statusnet_client  StatusNet_showChooseHeadDialog..... authorId');
         // that.initAttachViewer(event.imgSrc);
-        that.showChooseHeadDialog();
+      	that.showChooseHeadDialog();
     });
     Titanium.Gesture.addEventListener('orientationchange', function(event) {
         Titanium.App.fireEvent('StatusNet_orientationChange', {
@@ -619,7 +631,7 @@ StatusNet.Client.prototype.initAttachViewer = function(url){
     // @fixme drop the duped title if we can figure out why it doesn't come through
     // var navbar = StatusNet.Platform.createNavBar(window, '图片查看');
 
-    var cancel = Titanium.UI.createButton({
+    var cancel = this.cancelButton = Titanium.UI.createButton({
         title: "返回",
         width:70,
         heigth:40,
@@ -702,6 +714,8 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
 			   		for(var i = 0; i < reponseObj.length; i++){
 			   			picker.add(reponseObj[i]['name'] + '新鲜事', function(_index){
 			   				var user = reponseObj[_index] ;
+			   				that.currTabName = user['name'] ;
+   							that.currAccount = user['id'] ;
 		        		that.setAccountLabel(user['name'] + '新鲜事');
 		        		that.switchView(user['id']) ;
 		       		});
@@ -715,10 +729,11 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
 		    	
 		    },null)});
 
+				this.currTabName = 'index' ;
         this.setAccountLabel('index');
         this.navbar.view.add(selfLabel);
 
-        var updateButton = Titanium.UI.createButton({
+        var updateButton = this.updateButton = Titanium.UI.createButton({
             width: 40,
             height: 40,
             top: 2
@@ -750,7 +765,7 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
         });
         this.navbar.setRightNavButton(updateButton);
         
-        var backButton = Titanium.UI.createButton({
+        var backButton = this.backButton = Titanium.UI.createButton({
             width: 70,
             top: 0,
             bottom: 0,
@@ -760,7 +775,13 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
         backButton.addEventListener('click', function() {
             that.switchViewIndex('index') ;
         });
+        
         this.navbar.setLeftNavButton(backButton);
+        
+        this.actInd = Titanium.UI.createActivityIndicator();
+    		this.actInd.message = '发送中...';
+    		this.mainwin.add(this.actInd) ;
+    		this.actInd.hide() ;
 
         var tabinfo = {
             
@@ -1362,7 +1383,7 @@ StatusNet.Client.prototype.showChooseHeadDialog = function()
                 options.push('拍照');
                 callbacks.push(function() {
                     that.copenAttachment('camera', function() {
-                        // that.focus();
+                        //that.focus();
                     });
                 });
             }
@@ -1370,7 +1391,7 @@ StatusNet.Client.prototype.showChooseHeadDialog = function()
             options.push('图片');
             callbacks.push(function() {
                 that.copenAttachment('gallery', function() {
-                    // that.focus();
+                    //that.focus();
                 });
             });
 
@@ -1413,7 +1434,7 @@ StatusNet.Client.prototype.copenAttachment = function(source, callback)
         if (event.status == 'success') {
             StatusNet.debug('Photo attachment ok!');
             StatusNet.debug('width:' + event.width+" height:"+event.height);
-            that.addAttachment(event);
+            that.caddAttachment(event);
         } else if (event.status == 'cancel') {
             StatusNet.debug('Photo attachment canceled.');
         } else if (event.status == 'error') {
@@ -1461,4 +1482,152 @@ StatusNet.Client.prototype.cgetPhoto = function(source, callback) {
         Titanium.API.error("Unrecognized camera source. wtf!");
         alert("Bad photo source event. This is a bug!");
     }
+};
+
+StatusNet.Client.prototype.caddAttachment = function(event) {
+    var media = event.media;
+    var size = (StatusNet.Platform.isApple() ? media.size : media.length);
+    StatusNet.debug('SIZE IS: ' + size) ;
+    
+    var width = (media.width) ? media.width : event.width;
+    var height = (media.height) ? media.height : event.height;
+
+    var maxSide = 800;
+    var out = this.resizePhoto(media, width, height, maxSide);
+    media = out.media;
+    width = out.width;
+    height = out.height;
+
+		size = (StatusNet.Platform.isApple() ? media.size : media.length);
+    StatusNet.debug('SIZE IS: ' + size);
+    StatusNet.debug('####ppt media:' + media.mimeType);
+    
+    this.postAvatar(media) ;
+   
+};
+
+StatusNet.Client.prototype.resizePhoto = function(media, width, height, max) {
+    StatusNet.debug("Source image is " + width + "x" + height);
+
+    var orig = {media: media, width: width, height: height};
+    // if (StatusNet.Platform.isAndroid()) {
+        // // Our resizing gimmick doesn't 100% work on Android yet.
+        // // We end up with a PNG, and/or a spew of error messages
+        // // about failed type conversions.
+        // //
+        // // Note that on iPhone we resize ok, but we have no way to
+        // // specify the JPEG quality level and end up with a larger
+        // // file than necessary.
+        // return orig;
+    // }
+
+    var targetWidth = 96 ;
+    var targetHeight = 96 ;
+    
+    /*
+    if (width > height) {
+        if (width > max) {
+            targetWidth = max;
+            targetHeight = Math.round(height * max / width);
+        } else {
+            return orig;
+        }
+    } else {
+        if (height > max) {
+            targetHeight = max;
+            targetWidth = Math.round(width * max / height);
+        } else {
+            return orig;
+        }
+    }*/
+
+    StatusNet.debug("Resizing image from " + width + "x" + height +
+                    " to " + targetWidth + "x" + targetHeight);
+    // Resize through an intermediary imageView
+    StatusNet.debug("QQQQQQQQQQQ 0" + targetWidth + " " + targetHeight);
+    
+    var imageView = Titanium.UI.createImageView({
+        width: targetWidth,
+        height: targetHeight,
+        image: media
+    });
+    StatusNet.debug("QQQQQQQQQQQ A");
+
+    // Ye horrible hack!
+    // on Android, the image conversion esplodes.
+    // Try inserting it so it's live...
+    // if (StatusNet.Platform.isAndroid()) {
+        // this.window.add(imageView);
+    // }
+    StatusNet.debug("QQQQQQQQQQQ B");
+    var converted = imageView.toImage();
+    StatusNet.debug("QQQQQQQQQQQ C");
+    // if (StatusNet.Platform.isAndroid()) {
+        // this.window.remove(imageView);
+    // }
+
+    // Then to add insult to injury, on Android it doesn't give us
+    // a TiBlob directly, but rather an event object similar to when
+    // we fetch directly from the camera. Yeah, doesn't make sense
+    // to me either.
+    StatusNet.debug("QQQQQQQQQQQ D");
+    if (typeof converted.media == "object") {
+        StatusNet.debug("QQQQQQQQQQQ E1");
+        return {
+            media: converted.media,
+            width: converted.width,
+            height: converted.height
+        };
+    } else {
+        StatusNet.debug("QQQQQQQQQQQ E2 " + converted.width + " " + converted.height);
+        return {
+            media: converted,
+            width: converted.width,
+            height: converted.height
+        };
+    }
+};
+
+StatusNet.Client.prototype.postAvatar = function(media)
+{
+    StatusNet.debug("StatusNet.postAvatar()");
+    if (Titanium.Network.online == false) {
+        alert("No internet connection!");
+        return;
+    }
+
+    var that = this;
+    var method = 'account/update_profile_image.as';
+    var params = {source: StatusNet.Platform.defaultSourceName(),
+                  media: media,image: media,user: this.account.username};
+
+    that.enableControls(false);
+    that.actInd.show();
+
+    this.account.apiPost(method, params,
+        function(status, response) {
+        	StatusNet.debug("####ppt postAvatar success");
+        	that.actInd.hide();
+        	that.enableControls(true);
+          Titanium.App.fireEvent('StatusNet_tabSelectedUser', {
+   					tabName: that.currTabName,
+   					index: that.currAccount
+          });
+        },
+        function(status, response, responseText) {
+        	StatusNet.debug("####ppt postAvatar failure");
+        	that.actInd.hide();
+        	that.enableControls(true);
+        	Titanium.App.fireEvent('StatusNet_tabSelectedUser', {
+   					tabName: that.currTabName,
+   					index: that.currAccount
+          });
+       	}
+    );
+};
+
+StatusNet.Client.prototype.enableControls = function(enabled)
+{
+		this.backButton.enabled = enabled;
+    this.updateButton.enabled = enabled;
 };
