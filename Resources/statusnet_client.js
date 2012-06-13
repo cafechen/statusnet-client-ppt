@@ -30,6 +30,8 @@ StatusNet.Client = function(_account) {
 
     if (_account) {
         StatusNet.debug("we have an account");
+        
+        
     } else {
         StatusNet.debug("we don't have an account");
     }
@@ -565,7 +567,21 @@ StatusNet.Client.prototype.showViewIndex = function(html) {
 	      backgroundColor: 'white'
 	    });
     }else{
+        StatusNet.debug('that.indexview.setHtml(html)...');
+        that.mainwin.remove(that.indexview);
+        that.indexview = Titanium.UI.createWebView({
+          top: that.navbar.height,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          scalesPageToFit: false,
+          //html: "http://p.pengpengtou.com/info/index/userid/" + this.account.username,
+          html: html,
+          //url: "index.html",
+          backgroundColor: 'white'
+        });
     	that.indexview.visible = true ;
+    	// that.indexview.setHtml(html);
     }
     
     that.mainwin.add(that.indexview);
