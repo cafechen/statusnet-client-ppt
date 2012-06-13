@@ -196,6 +196,7 @@ StatusNet.Client.prototype.initInternalListeners = function() {
         StatusNet.debug('Event: ' + event.tabName);
         that.currTabName = event.tabName ;
    			that.currAccount = event.index ;
+   		that.setNavbarVisiable();
         that.setAccountLabel(event.tabName + "新鲜事");
         that.switchView(event.index);
     });
@@ -699,6 +700,7 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
             right: 60,
             top: 0,
             bottom: 0,
+            visible: false,
             color: "white",
             font: {
                 fontSize: 18
@@ -736,6 +738,7 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
         var updateButton = this.updateButton = Titanium.UI.createButton({
             width: 40,
             height: 40,
+            visible: false,
             top: 2
         });
         if (StatusNet.Platform.isApple()) {
@@ -768,6 +771,7 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
         var backButton = this.backButton = Titanium.UI.createButton({
             width: 70,
             top: 0,
+            visible: false,
             bottom: 0,
             title: "返回"
         });
@@ -895,6 +899,13 @@ StatusNet.Client.prototype.setAccountLabel = function(name) {
      this.selfLabel.font = {
          fontSize: 20
      };
+};
+
+StatusNet.Client.prototype.setNavbarVisiable = function() {
+    
+     this.selfLabel.setVisible(true);
+     this.updateButton.setVisible(true);
+     this.backButton.setVisible(true);
 };
 
 /**
