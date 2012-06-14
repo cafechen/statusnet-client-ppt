@@ -788,7 +788,7 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
         updateButton.addEventListener('click', function() {
             that.newNoticeDialog();
         });
-        this.navbar.setRightNavButton(updateButton);
+        // this.navbar.setRightNavButton(updateButton);
         
         var backButton = this.backButton = Titanium.UI.createButton({
             width: 70,
