@@ -567,7 +567,11 @@ StatusNet.Client.prototype.showViewIndex = function(html) {
 	      backgroundColor: 'white'
 	    });
     }else{
-        StatusNet.debug('that.indexview.setHtml(html)...');
+        if (StatusNet.Platform.isApple()) {
+            StatusNet.debug('that.indexview.setHtml(html)...');
+            that.indexview.setHtml(html);
+        }else{
+        StatusNet.debug('that.indexview.remove webview...');
         that.mainwin.remove(that.indexview);
         that.indexview = Titanium.UI.createWebView({
           top: that.navbar.height,
@@ -580,6 +584,8 @@ StatusNet.Client.prototype.showViewIndex = function(html) {
           //url: "index.html",
           backgroundColor: 'white'
         });
+        }
+        
     	that.indexview.visible = true ;
     	// that.indexview.setHtml(html);
     }
