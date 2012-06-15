@@ -29,7 +29,7 @@ if (typeof Titanium == "undefined") {
     document.write('Titanium is undefined. Nothing will work in this webview.');
 }
 
-var myScroll;
+var myScroll = null;
 var loadingMore = false;
 var account = {};
 var lastClickTime = Date.now();
@@ -264,7 +264,9 @@ function initScroll(pullUp) {
     }
 
     setTimeout(function () {
-        myScroll = new iScroll('wrapper', scrollProps);
+   		if(myScroll == null){
+      	myScroll = new iScroll('wrapper', scrollProps);
+    	}
     }, 100); // Don't muck with this, required by library
 };
 
