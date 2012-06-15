@@ -640,6 +640,7 @@ showProfileHeader = function(user, extended, authorId) {
     	Titanium.API.debug('<img src="' + user.avatarLarge + '"/>');
     	html.push('<img src="' + user.avatarLarge + '" onclick="showChooseHeadDialog()"/>');
   	}else{
+  	    html.push('<img src="' + user.avatarLarge + '" onclick=""/>');
   	    Titanium.API.debug('user.username:' + user.username + " account.username:" + account.username);
   	}
 
