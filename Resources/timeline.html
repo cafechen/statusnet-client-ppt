@@ -623,19 +623,22 @@ enableDirectMessageControls = function(dm) {
 showProfileHeader = function(user, extended, authorId) {
     Titanium.API.debug("showProfileInfo()");
     Titanium.API.debug("showProfileInfo() - account.username = " + account.username);
+    Titanium.API.debug("showProfileInfo() - user:" + user+" authorid: "+authorId);
 
     $('#header').empty();
 
     var html = [];
 
     html.push('<div id="profile_panel">');
-    Titanium.API.debug('user.username' + user.username + " account.username" + account.usernam);
-    if (user.nickname == account.username) {
+    Titanium.API.debug('user.username:' + user.username + " account.username:" + account.username);
+    if (user.username == account.username) {
     	Titanium.API.debug('<img src="' + user.avatarLarge + '" onclick="showChooseHeadDialog()"/>');
     	html.push('<img src="' + user.avatarLarge + '" onclick="showChooseHeadDialog()"/>');
-    }else{
+    }else if(user.username=="李友林"){
     	Titanium.API.debug('<img src="' + user.avatarLarge + '"/>');
     	html.push('<img src="' + user.avatarLarge + '" onclick="showChooseHeadDialog()"/>');
+  	}else{
+  	    Titanium.API.debug('user.username:' + user.username + " account.username:" + account.username);
   	}
 
     if (extended) {
