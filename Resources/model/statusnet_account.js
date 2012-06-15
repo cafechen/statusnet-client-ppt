@@ -26,13 +26,14 @@
  * @param string apiroot API base URL, eg 'http://identi.ca/api'
  * @return StatusNet.Account object
  */
-StatusNet.Account = function(username, password, apiroot) {
+StatusNet.Account = function(username, password, apiroot, nickname) {
 
     StatusNet.debug('in StatusNet.Account()');
 
     this.username = username;
     this.password = password;
     this.apiroot  = apiroot;
+    this.nickname = nickname;
 };
 
 /**
@@ -142,7 +143,8 @@ StatusNet.Account.fromRow = function(row) {
     var ac = new StatusNet.Account(
         row.fieldByName("username"),
         row.fieldByName("password"),
-        row.fieldByName("apiroot")
+        row.fieldByName("apiroot"),
+        row.fieldByName("nickname")
     );
 
     ac.id = row.fieldByName("id");
@@ -297,13 +299,14 @@ StatusNet.Account.prototype.ensure = function(db) {
 
         if (StatusNet.rowCount(rs) === 0) {
             db.execute("INSERT INTO account " +
-                       "(username, password, apiroot, is_default, profile_image_url, text_limit, site_logo) " +
-                       "VALUES (?, ?, ?, 0, ?, ?, ?)",
+                       "(username, password, apiroot, is_default, profile_image_url, text_limit, nickname, site_logo) " +
+                       "VALUES (?, ?, ?, 0, ?, ?, ?, ?)",
                        this.username,
                        this.password,
                        this.apiroot,
                        this.avatar,
                        this.textLimit,
+                       this.nickname,
                        this.siteLogo);
 
             StatusNet.debug('inserted new account');

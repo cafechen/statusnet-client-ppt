@@ -143,6 +143,7 @@ StatusNet.TimelineView.prototype.clearTimelineView = function(html) {
     Titanium.App.fireEvent('StatusNet_setTimeline', {
         html: html,
         account: {
+            nickname: this.client.account.nickname,
             username: this.client.account.username,
             apiroot: this.client.account.apiroot
         }

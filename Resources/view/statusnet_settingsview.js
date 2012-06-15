@@ -33,6 +33,9 @@ StatusNet.SettingsView = function(client) {
     this.onClose = new StatusNet.Event();
     this.rwindow = null;
     this.lwindow = null;
+    this.nickname = null;
+    this.authorID = null;
+    this.username = null;
 };
 
 /**
@@ -48,6 +51,7 @@ StatusNet.SettingsView.prototype.init = function() {
     	for(var i = 1; i < this.accounts.length; i++){
     		this.accounts[i].deleteAccount();
     	}
+    	StatusNet.debug('SettingsView.init... this.accounts[0].nickname: '+this.accounts[0].nickname+"username: "+this.accounts[0].username);
     	view.client.switchAccount(this.accounts[0]);
     }else{
 			view.showAddAccount(true);
@@ -554,7 +558,6 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         	view.fields.status.text = "开始登陆..." ;
         	disableFields() ;
       		view.checkAccount(view, function(){
-      			StatusNet.debug('####stevenchen nickname2:');
       			view.verifyAccount(function() {
               StatusNet.debug('login click: updated');
               if (view.workAcct != null) {
@@ -687,10 +690,11 @@ StatusNet.SettingsView.prototype.checkAccount = function(view, onSuccess, onErro
     var that = this;
     this.discoverPPTAccount(function(status, responseObj, responseText) {
      	StatusNet.debug("####stevenchen status: " + status);
-     	StatusNet.debug("####stevenchen nickname: " + responseObj.nickname);
      	//that.fields.username.value = responseObj.nickname ;
-     	that.nickname = responseObj.nickname ;
-     	//StatusNet.debug("####stevenchen nickname1: " + that.fields.username.value);
+     	that.nickname = responseObj.nickname;
+     	that.authorID = responseObj.authorID;
+     	that.username = responseObj.username;
+     	StatusNet.debug("####stevenchen nickname:" + that.nickname+" authorID:"+that.authorID+" username:"+that.username);
      	onSuccess() ;
    	}, function(status, responseObj, responseText) {
    		that.fields.status.text = "错误的用户名或密码.";
@@ -737,7 +741,9 @@ StatusNet.SettingsView.prototype.discoverNewAccount = function(onSuccess, onErro
 		StatusNet.debug("####stevenchen discoverNewAccount ");
 		StatusNet.debug("####stevenchen discoverNewAccount this.nickname:" + this.nickname);
     var username = $.trim(this.nickname);
-		StatusNet.debug("####stevenchen username:" + username);
+    var nickname = $.trim(this.username);
+		StatusNet.debug("####stevenchen username:" + nickname);
+		StatusNet.debug("####stevenchen nickname:" + username);
     var password = this.fields.password.value;
     var site = 'a.pengpengtou.com' //$.trim(this.fields.site.value);
 
@@ -751,7 +757,7 @@ StatusNet.SettingsView.prototype.discoverNewAccount = function(onSuccess, onErro
 
     var foundAPI = function(apiroot) {
         that.fields.status.text = "寻找" + apiroot + "...";
-        onSuccess(new StatusNet.Account(username, password, apiroot));
+        onSuccess(new StatusNet.Account(username, password, apiroot, nickname));
     };
 
     if (site.substr(0, 7) == 'http://' || site.substr(0, 8) == 'https://') {
@@ -772,7 +778,7 @@ StatusNet.SettingsView.prototype.discoverNewAccount = function(onSuccess, onErro
         // Special case Twitter...
         // but it probably ain't super great as we do SN-specific stuff!
         url = 'https://twitter.com/';
-        onSuccess(new StatusNet.Account(username, password, url));
+        onSuccess(new StatusNet.Account(nickname, password, url));
     } else {
         // Looks like a bare hostname. Try its root page as HTTPS and HTTP...
         // Try RSD discovery!

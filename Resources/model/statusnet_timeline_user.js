@@ -180,7 +180,7 @@ StatusNet.TimelineUser.prototype.update = function(onFinish, customUrl) {
                 }
                 StatusNet.debug('Timeline.update calling finishedFetch...');
                 that.finishedFetch(entryCount);
-                StatusNet.debug('Timeline.update DONE.');
+                StatusNet.debug('Timeline_user.update DONE.');
             };
             var onFailure = function(msg) {
                 // if parse failure

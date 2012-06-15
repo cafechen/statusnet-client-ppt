@@ -146,6 +146,7 @@ Titanium.App.addEventListener("StatusNet_deleteNoticeComplete", function(event) 
 Titanium.App.addEventListener("StatusNet_showProfile", function(event) {
     var user = objectOrJson(event.user);
     var extended = objectOrJson(event.extended);
+    Titanium.API.debug("StatusNet_showProfile... extended:"+extended+" authorId:"+authorId);
     showProfileHeader(user, extended, event.authorId, event.acctUsername);
     setTimeout(function () {
         initScroll($('#notices').height() > $('#wrapper').height());
@@ -632,13 +633,13 @@ showProfileHeader = function(user, extended, authorId) {
     var html = [];
 
     html.push('<div id="profile_panel">');
-    Titanium.API.debug('user.username:' + user.username + " account.username:" + account.username);
-    if (user.username == account.username) {
+    Titanium.API.debug('user.username:' + user.username + " account.username:" + account.nickname);
+    if (user.username == account.nickname) {
     	Titanium.API.debug('<img src="' + user.avatarLarge + '" onclick="showChooseHeadDialog()"/>');
     	html.push('<img src="' + user.avatarLarge + '" onclick="showChooseHeadDialog()"/>');
     }else{
     	Titanium.API.debug('<img src="' + user.avatarLarge + '"/>');
-    	html.push('<img src="' + user.avatarLarge + '" onclick="showChooseHeadDialog()"/>');
+    	html.push('<img src="' + user.avatarLarge + '" onclick=""/>');
   	}
 
     if (extended) {

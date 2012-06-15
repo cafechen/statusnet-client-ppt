@@ -72,6 +72,7 @@ StatusNet.getDB = function() {
             'is_default INTEGER DEFAULT 0, ' +
             'profile_image_url TEXT, ' +
             'text_limit INTEGER DEFAULT 0, ' +
+            'nickname TEXT NOT NULL, ' +
             'site_logo TEXT, ' +
             'UNIQUE (username, apiroot)' +
             ')';
