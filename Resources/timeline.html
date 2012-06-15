@@ -636,12 +636,9 @@ showProfileHeader = function(user, extended, authorId) {
     if (user.username == account.username) {
     	Titanium.API.debug('<img src="' + user.avatarLarge + '" onclick="showChooseHeadDialog()"/>');
     	html.push('<img src="' + user.avatarLarge + '" onclick="showChooseHeadDialog()"/>');
-    }else if(user.username=="李友林"){
+    }else{
     	Titanium.API.debug('<img src="' + user.avatarLarge + '"/>');
     	html.push('<img src="' + user.avatarLarge + '" onclick="showChooseHeadDialog()"/>');
-  	}else{
-  	    html.push('<img src="' + user.avatarLarge + '" onclick=""/>');
-  	    Titanium.API.debug('user.username:' + user.username + " account.username:" + account.username);
   	}
 
     if (extended) {
