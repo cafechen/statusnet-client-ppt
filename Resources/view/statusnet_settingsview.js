@@ -47,7 +47,7 @@ StatusNet.SettingsView.prototype.init = function() {
     var view = this;
     this.showingLongclickDialog = false;
     this.accounts = StatusNet.Account.listAll(StatusNet.getDB());
-    if(this.accounts.length > 0){
+    if(this.accounts != null && this.accounts.length > 0){
     	for(var i = 1; i < this.accounts.length; i++){
     		this.accounts[i].deleteAccount();
     	}
