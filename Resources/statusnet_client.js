@@ -647,9 +647,12 @@ StatusNet.Client.prototype.showIndexLoading = function(loadingViewHeight){
     	var animation = Ti.UI.createAnimation({top:-150, duration:800});
 		var animationIndex = Ti.UI.createAnimation({top:that.navbar.height, duration:300});
 		that.indexview.animate(animationIndex);
-		that.loadingView.animate(animation);
+		if(that.loadingView){
+			that.loadingView.animate(animation);
+		}
     	animation.addEventListener('complete',function(e){
     		that.mainwin.remove(that.loadingView);
+    		that.loadingView = null;
 		});		
 	});
 }
