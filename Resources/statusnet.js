@@ -379,7 +379,8 @@ if (StatusNet.Platform.isApple()) {
             left: 0,
             right: 0,
             height: height,
-            backgroundColor: "#bfc1c6"
+            backgroundColor: "#bfc1c6",
+            zIndex:200
         });
         window.add(view);
 

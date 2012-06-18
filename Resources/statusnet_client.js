@@ -196,6 +196,10 @@ StatusNet.Client.prototype.initInternalListeners = function() {
     });
     Ti.App.addEventListener('StatusNet_tabSelectedUser', function(event) {
         StatusNet.debug('Event: ' + event.tabName);
+        if(that.indexview){
+         	that.mainwin.remove(that.indexview);
+         	that.indexview = null;	
+        }
         that.currTabName = event.tabName ;
    			that.currAccount = event.index ;
    		that.setNavbarVisiable();
@@ -496,9 +500,10 @@ StatusNet.Client.prototype.switchViewIndex = function(view) {
 };
 
 StatusNet.Client.prototype.showViewIndex = function(html) {
-
     var that = this;
     
+    var loadingViewHeight = 45;
+    that.setIndexLoading(loadingViewHeight);
     if(this.indexNavbar != null){
 			this.indexNavbar.view.show() ;
 			this.indexNavbar._label.show() ;
@@ -553,47 +558,104 @@ StatusNet.Client.prototype.showViewIndex = function(html) {
     });
     
     this.indexNavbar.setRightNavButton(logoutButton);
-    
     if(that.indexview == null){
 	    that.indexview = Titanium.UI.createWebView({
-	      top: that.navbar.height,
+	      top: that.navbar.height + loadingViewHeight,
 	      left: 0,
 	      right: 0,
 	      bottom: 0,
-	      scalesPageToFit: false,
+	      loading:true,
+	      showScrollbars:true, 
+          scalesPageToFit: false,
 	      //html: "http://p.pengpengtou.com/info/index/userid/" + this.account.username,
 	      html: html,
 	      //url: "index.html",
 	      backgroundColor: 'white'
 	    });
+	    that.mainwin.add(that.indexview);
     }else{
         if (StatusNet.Platform.isApple()) {
             StatusNet.debug('that.indexview.setHtml(html)...');
             that.indexview.setHtml(html);
         }else{
-        StatusNet.debug('that.indexview.remove webview...');
-        that.mainwin.remove(that.indexview);
-        that.indexview = Titanium.UI.createWebView({
-          top: that.navbar.height,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          scalesPageToFit: false,
-          //html: "http://p.pengpengtou.com/info/index/userid/" + this.account.username,
-          html: html,
-          //url: "index.html",
-          backgroundColor: 'white'
-        });
+	        StatusNet.debug('that.indexview.remove webview...');
+	        that.mainwin.remove(that.indexview);
+	        that.indexview = Titanium.UI.createWebView({
+	          top: that.navbar.height + loadingViewHeight,
+	          left: 0,
+	          right: 0,
+	          bottom: 0,
+	          loading:true,
+	          showScrollbars:true, 
+	          scalesPageToFit: false,
+	          //html: "http://p.pengpengtou.com/info/index/userid/" + this.account.username,
+	          html: html,
+	          //url: "index.html",
+	          backgroundColor: 'white'
+	        });
+	        StatusNet.debug('timeline updated.');
+	        that.mainwin.add(that.indexview);
         }
-        
-    	that.indexview.visible = true ;
-    	// that.indexview.setHtml(html);
-    }
-    
-    that.mainwin.add(that.indexview);
-    
-    StatusNet.debug('timeline updated.');
+    	//that.indexview.visible = true ;
+    	//that.indexview.setHtml(html);
+    }    
+    that.showIndexLoading(loadingViewHeight);
+    //StatusNet.debug('timeline updated.');
+    //that.mainwin.add(that.indexview);
 };
+StatusNet.Client.prototype.setIndexLoading = function(loadingViewHeight) {
+	var that = this;
+	if(that.loadingView){
+		return true;
+	}	
+	that.loadingView = Titanium.UI.createView({
+    	zIndex : 0,
+    	top : that.navbar.height,
+    	visible:true,
+    	width : '100%',
+    	height : loadingViewHeight || 45,
+    	backgroundColor:'#fff'
+    });
+    var loadingInfo = Titanium.UI.createLabel({
+    	font : {
+				fontSize : '20sp',
+				fontFamily : 'Arial',
+				fontWeight:'bold'
+		},
+		color : '#000',
+		left:'40%',
+    	width : '30%',
+    	height : that.loadingView.height,
+    	text : '加载中...',
+    	textAlign : 'center'
+    });
+    var loadingImg = Titanium.UI.createImageView({
+    	left:'30%',
+    	width : parseFloat(that.loadingView.height)*8/15 + 'dp',
+    	height : that.loadingView.height,
+		image:'images/iscroll-loader.gif'
+    });
+    that.loadingView.add(loadingInfo);  
+    that.loadingView.add(loadingImg); 
+    that.mainwin.add(that.loadingView);   
+}
+
+StatusNet.Client.prototype.showIndexLoading = function(loadingViewHeight){
+	var that = this;
+	that.setIndexLoading(loadingViewHeight || 45);
+    that.indexview.addEventListener('load',function(e){
+    	var animation = Ti.UI.createAnimation({top:-150, duration:800});
+		var animationIndex = Ti.UI.createAnimation({top:that.navbar.height, duration:300});
+		that.indexview.animate(animationIndex);
+		if(that.loadingView){
+			that.loadingView.animate(animation);
+		}
+    	animation.addEventListener('complete',function(e){
+    		that.mainwin.remove(that.loadingView);
+    		that.loadingView = null;
+		});		
+	});
+}
 
 StatusNet.Client.prototype.switchUserTimeline = function(id) {
 
