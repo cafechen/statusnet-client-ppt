@@ -331,6 +331,9 @@ Titanium.API.debug("renderNotice intered...");
         author = notice.author;
         authorId = notice.authorId;
         authorUri = notice.authorUri;
+        if(authorUri == null || authorUri == ""){
+       		authorUri = "#" ;
+        }
     }
     var isSelf = author == account.username && isLocalAuthor(authorUri);
 
@@ -355,7 +358,7 @@ Titanium.API.debug("renderNotice intered...");
     html.push('<div class="' + classes.join(" ") + '" id="notice-' + notice.id +'" name="notice-' + notice.id +'">');
     if (!user) {
         var avdiv = $('<div><div class="avatar"><a rel="external"><img></a></div></div>').
-            find('a').attr('href', notice.authorUri).end().
+            find('a').attr('href', authorUri).end().
             find('img').attr('src', avatar).attr('title', author).end();
         html.push(avdiv.html());
     }
