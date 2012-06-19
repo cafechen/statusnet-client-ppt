@@ -679,48 +679,24 @@ StatusNet.NewNoticeView.prototype.getTPL = function()
 
     StatusNet.HttpClientPPT.send(url,function(status, responseObj, responseText){
         StatusNet.debug("####ppt succuss status:" + status+" responseObj:"+responseObj+" responseText:"+responseText);
-        that.actInd.hide();
-        that.enableControls(true);
-        
-        var options = [];
-        var callbacks = [];
         var obj = responseObj;
         that.TPLJsonObj = obj;
-        StatusNet.debug("####ppt succuss obj:" + obj+" obj.length: "+obj.length);
-        if (obj.length) {
-            var i;
-            for (i=0; i < obj.length; i++) {
-                StatusNet.debug("####ppt succuss obj item"+i+":" + obj[i]+" stringifyItem:"+JSON.stringify(obj[i]));
-                options.push(obj[i].name);
-                callbacks.push(function() {
-                    that.focus();
-                    StatusNet.debug("####ppt succuss TPLJsonObj:" + that.TPLJsonObj[0]+" content:"+that.TPLJsonObj[0].content);
-                    that.noticeTextArea.value = that.noticeTextAreaValue + that.TPLJsonObj[0].content;
-                });
-            }
-        }
-        
-        var destructive = -1;
-        var cancel = options.length;
-        options.push('返回');
-        callbacks.push(function() {
-            that.focus();
-        });
-
-        var dialog = Titanium.UI.createOptionDialog({
-            title: '模版',
-            options: options,
-            cancel: cancel
-        });
-        if (destructive > -1) {
-            dialog.destructive = destructive;
-        }
-        dialog.addEventListener('click', function(event) {
-            if (event.index !== undefined && callbacks[event.index] !== undefined) {
-                callbacks[event.index]();
-            }
-        });
-        dialog.show();
+        var picker = new StatusNet.Picker({
+		  	});
+		  	for(var i = 0; i < responseObj.length; i++){
+		  		picker.add(responseObj[i]['name'], function(_index){
+	   				that.focus();
+           	StatusNet.debug("####ppt succuss TPLJsonObj:" + that.TPLJsonObj[_index]+" content:"+that.TPLJsonObj[_index].content);
+           	that.noticeTextArea.value = that.noticeTextAreaValue + that.TPLJsonObj[_index].content;
+       		});
+	   		};
+       	picker.add('返回', function() {
+        	//Titanium.UI.Clipboard.setText(text);
+       	});
+        //picker.addCancel();
+        picker.show();
+        that.enableControls(true);
+    		that.actInd.hide();
     },function(status, responseObj, responseText){
         StatusNet.debug("####ppt error status:" + status+" responseObj:"+responseObj+" responseText:"+responseText);
         that.actInd.hide();
