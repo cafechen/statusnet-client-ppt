@@ -8,13 +8,13 @@
         <target device="ipad">true</target>
         <target device="android">true</target>
     </deployment-targets>
-    <id>net.status.client.mobile</id>
+    <id>com.pengpengtou.publish</id>
     <name>pengpengtou</name>
-    <version>1.0.7</version>
-    <publisher>StatusNet, Inc.</publisher>
-    <url>http://status.net/</url>
+    <version>1.0.0</version>
+    <publisher>Beijing Tech-Leap Information Technology Co. Ltd.</publisher>
+    <url>http://www.pengpengtou.com/</url>
     <description>碰碰头</description>
-    <copyright>2011 StatusNet, Inc.</copyright>
+    <copyright>Beijing Tech-Leap Information Technology Co. Ltd.</copyright>
     <icon>appicon@2x.png</icon>
     <persistent-wifi>false</persistent-wifi>
     <prerendered-icon>false</prerendered-icon>
