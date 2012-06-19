@@ -646,7 +646,9 @@ StatusNet.Client.prototype.showIndexLoading = function(loadingViewHeight){
     that.indexview.addEventListener('load',function(e){
     	var animation = Ti.UI.createAnimation({top:-150, duration:800});
 		var animationIndex = Ti.UI.createAnimation({top:that.navbar.height, duration:300});
-		that.indexview.animate(animationIndex);
+		if(that.indexview){
+			that.indexview.animate(animationIndex);
+		}
 		if(that.loadingView){
 			that.loadingView.animate(animation);
 		}
