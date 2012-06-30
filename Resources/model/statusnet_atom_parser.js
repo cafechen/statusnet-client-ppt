@@ -20,7 +20,9 @@
 /**
  * Atom parsing class that understands some Activity Streams data
  */
-StatusNet.AtomParser = function() {};
+StatusNet.AtomParser = function() {
+	this.prepWin = null;
+};
 
 /**
  * Iterate over all direct children of the given DOM node, calling functions from a map
@@ -124,15 +126,52 @@ StatusNet.AtomParser.prepBackgroundParse = function(callback)
     // The application will need to wait until the BG context is set up...
     Titanium.App.addEventListener('StatusNet.background.ready', function() {
         if (callback) {
-            callback();
+            callback(window);
             callback = null;
         }
     });
     var window = Titanium.UI.createWindow({
         url: 'statusnet_background_parser.js',
-        zIndex: -100
-    });
-    window.open();
+        zIndex: -100,
+    })
+    // fix Android click backKey enter black background. by zhaoqy
+    if(StatusNet.Platform.isAndroid()){
+    	this.prepWin = window;
+		window.orientationModes = [Titanium.UI.PORTRAIT];
+    	// /Resources/android/default.png
+    	window.backgroundImage = '/default.png';
+    	window.hide();
+    	var byeText = Titanium.UI.createLabel({
+    	    font:{fontSize:'65sp',fontFamily:'Arial',fontWeight:'bold'},
+    	    textAlign : 'center',
+    	    color:'#414444',
+    		zIndex: 0,
+			text :'GoodBye!',
+			opacity:0,
+			width:'100%',
+			height:400,
+			top:50,
+			visible:false
+		});
+		window.add(byeText);
+		window.addEventListener('touchstart',function(){
+			Ti.UI.createNotification({
+                message : '再见',
+                duration : Ti.UI.NOTIFICATION_DURATION_SHORT
+            }).show();
+            window.close();
+		});
+		window.addEventListener('close',function(){
+			Titanium.Android.currentActivity.finish();
+		});	
+		window.addEventListener('open',function(){
+			setTimeout(function(){
+				byeText.show();
+			},500);
+			window.show();
+		});		
+    }  
+	window.open();
 };
 
 /**

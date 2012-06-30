@@ -58,11 +58,17 @@ for (var i = 0; i < sources.length; i++) {
 Titanium.UI.setBackgroundColor('#000');
 
 StatusNet.debug("Setting up background parser context...");
-StatusNet.AtomParser.prepBackgroundParse(function() {
+StatusNet.AtomParser.prepBackgroundParse(function(prepWin) {
     // Initialize database
     var db = StatusNet.getDB();
 
     // Find default account, if any, and fire up the client!
     var acct = StatusNet.Account.getDefault(db);
-    var client = new StatusNet.Client(acct);
+    var client = new StatusNet.Client(acct,prepWin);
+    if(StatusNet.Platform.isAndroid()){
+	    Ti.UI.createNotification({
+	        message : '欢迎使用碰碰头',
+	        duration : Ti.UI.NOTIFICATION_DURATION_LONG
+	    }).show();
+    }
 });

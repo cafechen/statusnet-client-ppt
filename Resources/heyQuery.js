@@ -254,7 +254,10 @@ heyQuery.quickTagAttribMatch = /^([A-Za-z0-9_-]+)\[([A-Za-z0-9_-]+)=([A-Za-z0-9_
  */
 heyQuery.trim = function(str)
 {
-    return str.replace(/^\s*|\s*$/gm, '');
+	if(typeof(str) == 'string'){
+		return str.replace(/^\s*|\s*$/gm, '');
+	}
+	return '';
 }
 
 var $ = jQuery = heyQuery;

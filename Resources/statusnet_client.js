@@ -24,7 +24,7 @@
  * @param StatusNet.Account _account
  * @return StatusNet.Client object
  */
-StatusNet.Client = function(_account) {
+StatusNet.Client = function(_account,prepWin) {
 
     StatusNet.debug("Client constructor");
 
@@ -35,7 +35,9 @@ StatusNet.Client = function(_account) {
     } else {
         StatusNet.debug("we don't have an account");
     }
-
+   	this.mainwin = null;
+   	this.prepWin = prepWin;
+   	
     this.account = _account;
     this.infoview = null ;
     this.webViewReady = false;
@@ -44,12 +46,13 @@ StatusNet.Client = function(_account) {
     this.newNoticeView = null;
     this.accountView = null;
     this.isRefreshing = false; // Are we doing pull-to-refresh or load more?
-    this.init();
 		
-		this.sent = new StatusNet.Event();
+	this.sent = new StatusNet.Event();
     this.onClose = new StatusNet.Event();
     this.currTabName = null ;
    	this.currAccount = null ;
+   	
+   	this.init();
 };
 
 StatusNet.Client.prototype.getActiveAccount = function() {
@@ -191,6 +194,7 @@ StatusNet.Client.prototype.initInternalListeners = function() {
         StatusNet.debug('Event: ' + event.tabName);
         that.currTabName = event.tabName ;
    			that.currAccount = event.tabName ;
+   			that.setNavbarVisiable();
         that.setAccountLabel(event.tabName);
         that.switchView(event.tabName);
     });
@@ -202,7 +206,7 @@ StatusNet.Client.prototype.initInternalListeners = function() {
         }
         that.currTabName = event.tabName ;
    			that.currAccount = event.index ;
-   		that.setNavbarVisiable();
+   			that.setNavbarVisiable();
         that.setAccountLabel(event.tabName + "新鲜事");
         that.switchView(event.index);
     });
@@ -220,6 +224,25 @@ StatusNet.Client.prototype.initInternalListeners = function() {
         that.setAccountLabel(event.tabName);
         that.switchViewIndex(event.tabName);
     });
+    Ti.App.addEventListener('StatusNet_tabSelectedPublic', function(event) {
+		that.currTabName = event.tabName ;
+		that.currAccount = event.tabName ;
+		that.setNavbarVisiable();
+		switch(event.index){
+			case '1':
+				that.setAccountLabel("军营生活");
+				break ;
+			case '2':
+				that.setAccountLabel("战报");
+				break ;
+			case '3':
+				that.setAccountLabel("参谋部");
+				break ;
+			default :
+				that.setAccountLabel(event.tabName);	
+		}
+		that.switchView('public',event.index);
+	});
     Ti.App.addEventListener('StatusNet_subscribe', function(event) {
         StatusNet.debug('Event: ' + event);
         that.subscribe(event.userId, function() {
@@ -327,8 +350,10 @@ StatusNet.Client.prototype.initInternalListeners = function() {
  *
  * @param String timeline   the timeline to show
  */
-StatusNet.Client.prototype.switchView = function(view) {
-
+StatusNet.Client.prototype.switchView = function(view, selected) {
+	var that = this;
+	
+	that.showViewIndex('');
     StatusNet.debug("StatusNet.Client.prototype.switchView - view = " + view);
     
   	if(this.infoview != null){
@@ -376,7 +401,7 @@ StatusNet.Client.prototype.switchView = function(view) {
     switch (view) {
 
         case 'public':
-            this.timeline = new StatusNet.TimelinePublic(this);
+            this.timeline = new StatusNet.TimelinePublic(this, selected);
             this.view = new StatusNet.TimelineViewPublic(this);
             break;
         case 'user':
@@ -427,6 +452,7 @@ StatusNet.Client.prototype.switchView = function(view) {
 
     StatusNet.debug("Initializing view...");
     this.view.init();
+    this.view.clearTimelineView();
 
     StatusNet.debug('telling the view to show...');
     this.view.show();
@@ -484,7 +510,7 @@ StatusNet.Client.prototype.switchViewInfo = function(view) {
 
 StatusNet.Client.prototype.switchViewIndex = function(view) {
 	var that = this;
-	StatusNet.HttpClientPPT.getHTML("http://p.pengpengtou.com/info/index/userid/" + this.account.username,function(status, responseText){
+	StatusNet.HttpClientPPT.getHTML("http://p.pengpengtou.com/info/index/userid/" + this.account.username + "/version/1.2/",function(status, responseText){
   	StatusNet.debug("####response :" + responseText + ":" + status);
   	Titanium.App.fireEvent('StatusNet_indexFinishedUpdate', {
             view: view
@@ -493,7 +519,7 @@ StatusNet.Client.prototype.switchViewIndex = function(view) {
                 that.loadedSound.play();
             }
   	var html = responseText ;
-  	that.showViewIndex(html)
+  	that.showViewIndex(html);
   },function (){
   	
   },null)
@@ -552,9 +578,51 @@ StatusNet.Client.prototype.showViewIndex = function(html) {
     
     logoutButton.addEventListener('click', function() {
         StatusNet.debug("logout click......");
-        StatusNet.debug('showSettings!');
-        that.account.deleteAccount();
-        that.showSettingsView();
+        StatusNet.debug('showSettings!');  
+        
+        if(StatusNet.Platform.isAndroid()){
+        	var logoutDialog = Titanium.UI.createAlertDialog({
+			    title: '系统提醒',
+			    message: '是否要注销自动登陆？',
+			    buttonNames: ['确认','取消']
+			});
+			logoutDialog.show();
+			logoutDialog.addEventListener('click',function(e){
+				if(e.index == 0){
+					that.account.deleteAccount();
+					//fix bug for android backbutton
+					that.prepWin.hide();
+					that.mainwin.hide();
+					if(that.infoview){
+						that.infoview.hide();
+         				that.mainwin.remove(that.infoview);
+					}	
+					if(that.indexview){
+						that.indexview.hide();
+         				that.mainwin.remove(that.indexview);
+					}
+					if (that.mainwin) {
+						StatusNet.Platform.animatedClose(that.mainwin);
+					};					
+					Titanium.Android.currentActivity.finish();	
+					//restart App
+        			StatusNet.AtomParser.prepBackgroundParse(function(prepWin) {
+					    var db = StatusNet.getDB();	
+					    var acct = StatusNet.Account.getDefault(db);
+					    var client = new StatusNet.Client(acct,prepWin);
+					});
+					
+					Ti.UI.createNotification({
+			    		message : ' 系统注销成功',
+			    		duration : Ti.UI.NOTIFICATION_DURATION_SHORT
+					}).show();	
+				}
+			});
+        }else{
+			StatusNet.Platform.animatedClose(that.mainwin);			
+			that.account.deleteAccount();
+			that.showSettingsView();
+        }    
     });
     
     this.indexNavbar.setRightNavButton(logoutButton);
@@ -660,7 +728,6 @@ StatusNet.Client.prototype.showIndexLoading = function(loadingViewHeight){
 }
 
 StatusNet.Client.prototype.switchUserTimeline = function(id) {
-
     StatusNet.debug("in switchUserTimeline - user id = " + id);
 
     if (id) {
@@ -700,9 +767,9 @@ StatusNet.Client.prototype.switchPPTAccount = function() {
 		var accounts = StatusNet.Account.listAll(StatusNet.getDB());
 		StatusNet.debug('####ppt switchPPTAccount length:' + accounts.length);
 		var acct = accounts[0];
-    Ti.App.fireEvent('StatusNet_switchAccount', {
-        "id": acct.id
-    });
+	    Ti.App.fireEvent('StatusNet_switchAccount', {
+	        "id": acct.id
+	    });
 };
 
 StatusNet.Client.prototype.initAttachViewer = function(url){
@@ -776,8 +843,33 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
         this.mainwin = Titanium.UI.createWindow({
             backgroundColor: 'black',
             navBarHidden: true,
-            exitOnClose: true // for Android back button
+            zIndex:100,
         });
+
+		if(StatusNet.Platform.isAndroid()){
+			var mainwin = this.mainwin; 
+			mainwin.addEventListener('android:back',function(){	
+				var exitDialog = Titanium.UI.createAlertDialog({
+				    title: '系统提醒',
+				    message: '是否要退出碰碰头？',
+				    buttonNames: ['确认','取消']
+				});
+				exitDialog.show();
+				exitDialog.addEventListener('click',function(e){
+					if(e.index == 0){
+						if(that.prepWin){
+							that.prepWin.show();
+						}
+						StatusNet.Platform.animatedClose(that.mainwin);
+						Titanium.Android.currentActivity.finish();		
+						Ti.UI.createNotification({
+	                		message : '再见',
+	                		duration : Ti.UI.NOTIFICATION_DURATION_SHORT
+	            		}).show();	
+					}
+				});
+			});
+		}
 
         this.navbar = StatusNet.Platform.createNavBar(this.mainwin);
 
@@ -864,14 +956,18 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
         
         backButton.addEventListener('click', function() {
             that.switchViewIndex('index') ;
-        });
+	        if(this.view && this.timeline){
+	        	this.view.clearTimelineView();   
+	        	this.timeline.clearTimelineView();
+	        }
+        }); 
         
         this.navbar.setLeftNavButton(backButton);
         
-        this.actInd = Titanium.UI.createActivityIndicator();
-    		this.actInd.message = '发送中...';
-    		this.mainwin.add(this.actInd) ;
-    		this.actInd.hide() ;
+        this.actInd = Titanium.UI.createActivityIndicator({zIndex:1000});
+		this.actInd.message = '发送中...';
+		this.mainwin.add(this.actInd) ;
+		this.actInd.hide() ;
 
         var tabinfo = {
             
@@ -976,6 +1072,9 @@ StatusNet.Client.prototype.setAccountLabel = function(name) {
             this.selfLabel.text = "福将碰碰头";
         case "boss":
         		this.selfLabel.text = "战报新鲜事";
+            break;
+        case "public":
+        		this.selfLabel.text = "军营生活";
             break;
         default:
             //throw "Gah wrong timeline";
@@ -1417,6 +1516,17 @@ StatusNet.Client.prototype.unblock = function(profileId, onSuccess) {
     );
 };
 
+StatusNet.Client.prototype.openSettingsView = function() {
+	var that = this;
+	
+	that.accountView = null;
+	var view = that.accountView = new StatusNet.SettingsView(that);
+	view.onClose.attach(function() {
+		that.accountView = null;
+	});
+	view.init();    
+};
+
 StatusNet.Client.prototype.showSettingsView = function() {
 
     var that = this;
@@ -1471,51 +1581,90 @@ StatusNet.Client.prototype.showChooseHeadDialog = function()
 {
     Titanium.API.debug('showChooseHeadDialog entered...');
     var that = this;
+//=====================================================================
+    // that.headerUploading = Titanium.UI.createActivityIndicator({
+    	// zIndex:1000,
+        // height:50,
+        // width:10
+    // });
+    // if (Titanium.Platform.name == 'iPhone OS') {
+        // that.headerUploading.style = Titanium.UI.iPhone.ActivityIndicatorStyle.DARK;
+    // } else {
+		// that.headerUploading.message = '头像上传中...';
+    // }
+    // that.mainwin.add(that.headerUploading);
+    // that.headerUploading.hide();
+//=====================================================================
+	// Titanium.App.addEventListener('uploading',function(e){
+		// that.prepWin.hide();
+		// that.mainwin.hide();
+		// if(that.infoview){
+			// that.infoview.hide();
+			// that.mainwin.remove(that.infoview);
+		// }	
+		// if(that.indexview){
+			// that.indexview.hide();
+			// that.mainwin.remove(that.indexview);
+		// }
+		// if (that.mainwin) {
+			// StatusNet.Platform.animatedClose(that.mainwin);
+		// };
+    	// StatusNet.AtomParser.prepBackgroundParse(function(prepWin) {
+		    // var db = StatusNet.getDB();	
+		    // var acct = StatusNet.Account.getDefault(db);
+		    // var client = new StatusNet.Client(acct,prepWin);
+		// });
+	// });
+    
+    var options = [];
+    var callbacks = [];
+    var destructive = -1;
 
-        var options = [];
-        var callbacks = [];
-        var destructive = -1;
-
-            if (StatusNet.Platform.hasCamera()) {
-                options.push('拍照');
-                callbacks.push(function() {
-                    that.copenAttachment('camera', function() {
-                        //that.focus();
-                    });
-                });
-            }
-
-            options.push('图片');
-            callbacks.push(function() {
-                that.copenAttachment('gallery', function() {
-                    //that.focus();
-                });
-            });
-
-        var cancel = options.length;
-        options.push('返回');
+    if (StatusNet.Platform.hasCamera()) {
+        options.push('拍照');
         callbacks.push(function() {
-            // that.focus();
+            that.copenAttachment('camera', function() {
+                //that.focus();
+            });
         });
+    }
 
-        var dialog = Titanium.UI.createOptionDialog({
-            title: '附件',
-            options: options,
-            cancel: cancel
+    options.push('图片');
+    callbacks.push(function() {
+        that.copenAttachment('gallery', function() {
+            //that.focus();
         });
-        if (destructive > -1) {
-            dialog.destructive = destructive;
+    });
+
+    var cancel = options.length;
+    options.push('返回');
+    callbacks.push(function() {
+        // that.focus();
+    });
+
+    var dialog = Titanium.UI.createOptionDialog({
+        title: '设定头像',
+        options: options,
+        cancel: cancel
+    });
+    if (destructive > -1) {
+        dialog.destructive = destructive;
+    }
+    dialog.addEventListener('click', function(event) {
+        if (event.index !== undefined && callbacks[event.index] !== undefined) {
+            callbacks[event.index]();
+         	// if (StatusNet.Platform.isAndroid() &&(event.index == 0 || event.index == 1)) {
+				// Titanium.App.fireEvent('uploading');
+			// }
         }
-        dialog.addEventListener('click', function(event) {
-            if (event.index !== undefined && callbacks[event.index] !== undefined) {
-                callbacks[event.index]();
-            }
-        });
-        dialog.show();
+    });
+    dialog.show();
 };
 
 StatusNet.Client.prototype.copenAttachment = function(source, callback)
-{
+{    
+	var that = this;
+
     StatusNet.debug("QQQQQQ openAttachment");
     if (StatusNet.Platform.isAndroid()) {
         if (!Ti.Filesystem.isExternalStoragePresent) {
@@ -1523,7 +1672,6 @@ StatusNet.Client.prototype.copenAttachment = function(source, callback)
             return;
         }
     }
-    var that = this;
     StatusNet.debug("QQQQQQ Getting attachment - source is: " + source);
     that.cgetPhoto(source, function(event) {
         // that.event = event;
@@ -1548,6 +1696,7 @@ StatusNet.Client.prototype.cgetPhoto = function(source, callback) {
     StatusNet.debug('getPhoto entered!');
     var options = {
         success: function(event) {
+
             StatusNet.debug('success......');
             callback({
                 status: 'success',
@@ -1568,7 +1717,7 @@ StatusNet.Client.prototype.cgetPhoto = function(source, callback) {
             });
         },
         autohide: true,
-        animated: true
+//        animated: true
     };
 
     if (source == 'camera') {
@@ -1598,9 +1747,8 @@ StatusNet.Client.prototype.caddAttachment = function(event) {
 		size = (StatusNet.Platform.isApple() ? media.size : media.length);
     StatusNet.debug('SIZE IS: ' + size);
     StatusNet.debug('####ppt media:' + media.mimeType);
-    
-    this.postAvatar(media) ;
-   
+       
+    this.postAvatar(media) ; 
 };
 
 StatusNet.Client.prototype.resizePhoto = function(media, width, height, max) {
@@ -1700,20 +1848,25 @@ StatusNet.Client.prototype.postAvatar = function(media)
 
     that.enableControls(false);
     that.actInd.show();
+//  that.activityIndicator.showModal('上传中...',60000, '上传超时！！！');	 
+	that.Toast.show();   
 
     this.account.apiPost(method, params,
         function(status, response) {
         	StatusNet.debug("####ppt postAvatar success");
         	that.actInd.hide();
-        	that.enableControls(true);
-          Titanium.App.fireEvent('StatusNet_tabSelectedUser', {
-   					tabName: that.currTabName,
-   					index: that.currAccount
-          });
+//			that.activityIndicator.hideModal();
+			that.Toast.hide();
+			that.enableControls(true);
+	          Titanium.App.fireEvent('StatusNet_tabSelectedUser', {
+	   					tabName: that.currTabName,
+	   					index: that.currAccount
+	          });
         },
         function(status, response, responseText) {
         	StatusNet.debug("####ppt postAvatar failure");
         	that.actInd.hide();
+        	that.Toast.hide();
         	that.enableControls(true);
         	Titanium.App.fireEvent('StatusNet_tabSelectedUser', {
    					tabName: that.currTabName,
@@ -1725,6 +1878,119 @@ StatusNet.Client.prototype.postAvatar = function(media)
 
 StatusNet.Client.prototype.enableControls = function(enabled)
 {
-		this.backButton.enabled = enabled;
+	this.backButton.enabled = enabled;
     this.updateButton.enabled = enabled;
 };
+
+
+StatusNet.Client.prototype.activityIndicator = (function(StatusNet) {
+
+    var activityIndicator;
+    var isShowing = false;
+    var myTimeout = undefined;
+
+    if(StatusNet.Platform.isAndroid()) {
+        activityIndicator = Ti.UI.createActivityIndicator({
+            color : '#fff'
+        });
+    } else {
+        var activityIndicator = Ti.UI.createWindow({
+            modal : false,
+            navBarHidden : true,
+            touchEnabled : true
+        });
+        activityIndicator.orientationModes = [Ti.UI.PORTRAIT];
+        var view = Ti.UI.createView({
+            backgroundColor : '#000',
+            height : '100%',
+            width : '100%',
+            opacity : 0.65
+        });
+        var ai = Ti.UI.createActivityIndicator({
+            style : Titanium.UI.iPhone.ActivityIndicatorStyle.BIG,
+            color : '#fff'
+        });
+        activityIndicator.ai = ai;
+        activityIndicator.add(view);
+        activityIndicator.add(ai);
+    }
+    activityIndicator.showModal = function(message, timeout, timeoutMessage) {
+        if(isShowing) {
+            return;
+        }
+        isShowing = true;
+        if(StatusNet.Platform.isAndroid()) {
+            activityIndicator.message = message;
+            activityIndicator.show();
+        } else {
+            activityIndicator.ai.message = message;
+            activityIndicator.ai.show();
+            activityIndicator.open({
+                animated : false
+            });
+        }
+        var time = timeout || 1000;
+        if(time) {
+            myTimeout = setTimeout(function() {
+                activityIndicator.hideModal();
+                if(timeoutMessage) {
+                    var alertDialog = Ti.UI.createAlertDialog({
+                        title : 'Loading Timeout',
+                        message : timeoutMessage || '',
+                        buttonNames : ['OK']
+                    });
+                    alertDialog.show();
+                }
+            }, time);
+        }
+    };
+    
+    activityIndicator.hideModal = function() {
+        if(myTimeout !== undefined) {
+            clearTimeout(myTimeout);
+            myTimeout = undefined;
+        }
+        if(isShowing) {
+            isShowing = false;
+            if(StatusNet.Platform.isAndroid()) {
+                activityIndicator.hide();
+            } else {
+                activityIndicator.ai.hide();
+                activityIndicator.close({
+                    animated : false
+                });
+            }
+        }
+    }
+    return activityIndicator;
+})(StatusNet);
+
+StatusNet.Client.prototype.Toast = (function(StatusNet) {
+	var self = {};
+	if(StatusNet.Platform.isAndroid()) {
+		self.toast =  Ti.UI.createNotification({
+    		message : '上传中...',
+    		duration : 99999999
+		});	
+		self.show = function() {
+		  self.toast.show();
+		  self.id = setInterval(function(){
+		  	 if(self.toast.message.slice(-3) == '...'){
+		  	 	self.toast.message = '上传中.'; 
+		  	 }else if(self.toast.message.slice(-3) == '中.'){
+		  	 	self.toast.message = '上传中..'; 
+		  	 }else{
+		  	 	self.toast.message = '上传中...'; 
+		  	 }
+		  },500);
+		}	
+		self.hide = function() {
+		  clearInterval(self.id);
+		  self.toast.hide();
+		}		
+		self.setMessage = function(message){
+			self.toast.message = message || '';
+		}
+		return self;
+	} 
+})(StatusNet);

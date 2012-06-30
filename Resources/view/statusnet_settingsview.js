@@ -36,6 +36,13 @@ StatusNet.SettingsView = function(client) {
     this.nickname = null;
     this.authorID = null;
     this.username = null;
+    
+    this.fields = {};
+	this.rfields = {};
+	
+	this.mainwin = client.mainwin;
+	this.prepWin = client.prepWin;
+
 };
 
 /**
@@ -54,8 +61,8 @@ StatusNet.SettingsView.prototype.init = function() {
     	StatusNet.debug('SettingsView.init... this.accounts[0].nickname: '+this.accounts[0].nickname+"username: "+this.accounts[0].username);
     	view.client.switchAccount(this.accounts[0]);
     }else{
-			view.showAddAccount(true);
-		}
+		view.showAddAccount(true);
+	}
 };
 
 /**
@@ -68,9 +75,7 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
         backgroundColor: StatusNet.Platform.dialogBackground(),
         navBarHidden: true // hack for iphone for now
     });
-
     var doClose = function() {
-
         // Hide keyboard...
         for (var i in view.fields) {
             if (view.fields.hasOwnProperty(i)) {
@@ -80,11 +85,13 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
                 }
             }
         }
+        if(StatusNet.Platform.isAndroid()){
+			view.init();
+		}
 
-        //view.fields = null;
-        StatusNet.Platform.animatedClose(window);
-    };
-
+		StatusNet.Platform.animatedClose(window);
+//      view.field = null;
+    };	
     // @fixme drop the duped title if we can figure out why it doesn't come through
     var navbar = StatusNet.Platform.createNavBar(window, '碰碰头');
 
@@ -190,7 +197,7 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
         view.getVerifyCode();
     });
     
-    this.disableFields = function() {
+    view.disableFields = function() {
     	StatusNet.debug("disable all fields");
     	view.rfields.username.enabled = false ;
     	view.rfields.password.enabled = false ;
@@ -201,7 +208,7 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
     	cancel.enabled = false ;
     }
     
-    this.enableFields = function() {
+    view.enableFields = function() {
     	StatusNet.debug("enable all fields");
     	view.rfields.username.enabled = true ;
     	view.rfields.password.enabled = true ;
@@ -226,15 +233,15 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
         username: {
             label: "手机号",
             props: {
-            		hintText: "手机号",
-            		keyboardType: Titanium.UI.KEYBOARD_EMAIL,
-                returnKeyType: Titanium.UI.RETURNKEY_DONE
+        		hintText: "手机号",
+            	returnKeyType: Titanium.UI.KEYBOARD_NUMBERS_PUNCTUATION,
+                keyboardType: Titanium.UI.RETURNKEY_DONE
             }
         },
         password: {
             label: "密码",
            	props: {
-           			hintText: "密码",
+           		hintText: "密码",
                 passwordMask:true,
                 keyboardType: Titanium.UI.KEYBOARD_EMAIL, // we need to specify *this* or the autocorrect setting doesn't get set on the actual field for Android?!
                 returnKeyType:Titanium.UI.RETURNKEY_DONE
@@ -243,7 +250,7 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
         verifyPassword: {
             label: "确认密码",
             props: {
-            		hintText: "确认密码",
+            	hintText: "确认密码",
                 passwordMask:true,
                 keyboardType: Titanium.UI.KEYBOARD_EMAIL, // we need to specify *this* or the autocorrect setting doesn't get set on the actual field for Android?!
                 returnKeyType:Titanium.UI.RETURNKEY_DONE
@@ -252,7 +259,7 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
         verifyCode: {
             label: "验证码",
             props: {
-            		hintText: "验证码",
+            	hintText: "验证码",
                 keyboardType: Titanium.UI.KEYBOARD_EMAIL, // we need to specify *this* or the autocorrect setting doesn't get set on the actual field for Android?!
                 returnKeyType:Titanium.UI.RETURNKEY_DONE
             }
@@ -280,7 +287,6 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
             });
 
             var text = Titanium.UI.createTextField(props);            
-
          		//workArea.add(label);
          		workArea.add(text);
             
@@ -288,10 +294,9 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
             	workArea.add(pasVerify) ;
             }
 
-            this.rfields[i] = text;
+            view.rfields[i] = text;
         }
-    }
-    
+    }   
     /*
     this.fields.username.addEventListener('return', function() {
         view.fields.password.focus();
@@ -305,16 +310,63 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
     this.rfields.verifyCode.addEventListener('return', function() {
         register.fireEvent('click', {});
     });
-    */
-   
-  	this.rfields.verifyPassword.addEventListener('focus', function() {
-    	scrollView.scrollTo(0, 40);
+    */ 
+	//for android backevent
+    if(StatusNet.Platform.isAndroid()){
+    	view.isInputing = false;
+	    var blurRfield = function(){
+	    	for (var i in view.rfields) {
+				if (view.rfields.hasOwnProperty(i)) {
+		        	var rfield = view.rfields[i];
+		        	if (typeof rfield.blur == 'function') {
+		            	rfield.blur();
+		        	}
+			    }
+		    }
+		    view.isInputing = false;
+		}
+		window.addEventListener('android:back',function(){
+			if(!view.isInputing){
+				doClose();
+			}else{
+				blurRfield();
+			}
 		});
-   
-   	this.rfields.verifyCode.addEventListener('focus', function() {
-   		scrollView.scrollTo(0, 80);
-  	});
-
+		view.rfields.username.addEventListener('return', function() {
+        	blurRfield();
+	    });
+	    view.rfields.password.addEventListener('return', function() {
+	        blurRfield();
+	    });
+	    view.rfields.verifyPassword.addEventListener('return', function() {
+	        blurRfield();
+	    });
+	    view.rfields.verifyCode.addEventListener('return', function() {
+	        blurRfield();
+	    });
+	    view.rfields.verifyPassword.addEventListener('focus', function() {
+	  		view.isInputing = true;
+	  		scrollView.scrollTo(0, 40);
+		}); 
+	   	view.rfields.verifyCode.addEventListener('focus', function() {
+	   		view.isInputing = true;
+	   		scrollView.scrollTo(0, 80);
+	  	});
+	    view.rfields.password.addEventListener('focus', function() {
+	   		view.isInputing = true;
+	    }); 
+	    window.addEventListener('open',function(){
+	    	view.rfields.username.focus();
+	    });
+	    view.isInputing = true;   
+	}else{
+		view.rfields.verifyPassword.addEventListener('focus', function() {
+	    	scrollView.scrollTo(0, 40);
+		}); 
+	   	view.rfields.verifyCode.addEventListener('focus', function() {
+	   		scrollView.scrollTo(0, 80);
+	  	});
+	}
     this.rfields.status = Titanium.UI.createLabel({
         text: "",
         left: 25,
@@ -352,12 +404,15 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
 StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
 	
     var view = this;
-    var window = this.lwindow = Titanium.UI.createWindow({
+    var window = view.lwindow = Titanium.UI.createWindow({
         title: "企业微博",
         backgroundColor: StatusNet.Platform.dialogBackground(),
         navBarHidden: true // hack for iphone for now
     });
-
+    //android exit notice
+	if(StatusNet.Platform.isAndroid()){
+		window.orientationModes = [Titanium.UI.PORTRAIT];
+	}
     var doClose = function() {
 
         // Hide keyboard...
@@ -474,9 +529,9 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         username: {
             label: "手机号",
             props: {
-            		hintText:'手机号', 
-                returnKeyType: Titanium.UI.RETURNKEY_DONE,
-                keyboardType: Titanium.UI.KEYBOARD_EMAIL
+            	hintText:'手机号', 
+                returnKeyType: Titanium.UI.KEYBOARD_NUMBERS_PUNCTUATION,
+                keyboardType: Titanium.UI.RETURNKEY_DONE
             }
         },
         password: {
@@ -526,20 +581,98 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
         login.fireEvent('click', {});
     });
     */
-   
-   
-   	this.fields.password.addEventListener('focus', function() {
-   		scrollView.scrollTo(0, 40);  
+    // window.addEventListener('touchstart',function(e){
+		// scrollView.scrollTo(0, 40);  
+    // });
+ 	//add fix android back event
+	if(StatusNet.Platform.isAndroid()){
+	    var blurRfield = function(){
+	    	for (var i in view.fields) {
+				if (view.fields.hasOwnProperty(i)) {
+		        	var field = view.fields[i];
+		        	if (typeof field.blur == 'function') {
+		            	field.blur();
+		        	}
+			    }
+		    }
+		    view.isInputing = false;
+		    view.fields.username.fireEvent('click', {});
+		}
+		view.isInputing = false;
+		var mainwin = view.lwindow; 
+		mainwin.addEventListener('android:back',function(){	
+			if(!view.isInputing){
+				var exitDialog = Titanium.UI.createAlertDialog({
+				    title: '系统提醒',
+				    message: '是否要退出碰碰头？',
+				    buttonNames: ['确认','取消']
+				});
+				exitDialog.show();
+				exitDialog.addEventListener('click',function(e){
+					if(e.index == 0){
+						view.prepWin.show();
+						if(window){
+							StatusNet.Platform.animatedClose(window);
+						}
+						Titanium.Android.currentActivity.finish();		
+						Ti.UI.createNotification({
+	                		message : '再见',
+	                		duration : Ti.UI.NOTIFICATION_DURATION_SHORT
+	            		}).show();	
+					}
+				});
+			}else{
+				blurRfield();
+			}
 		});
-
-    this.fields.status = Titanium.UI.createLabel({
+		view.fields.username.addEventListener('focus', function(e) {
+	   		scrollView.scrollTo(0, 40);
+    	});
+		view.fields.password.addEventListener('focus', function() {
+	   		view.isInputing = true;
+	   		scrollView.scrollTo(0, 40);  
+	    }); 
+	    view.fields.username.addEventListener('return', function(e) {
+	   		view.isInputing = false;
+	   		if($.trim(this.value).length > 0){
+	    		 view.fields.password.focus();
+	    	}
+    	});
+		view.fields.password.addEventListener('return', function() {
+	   		view.isInputing = false;
+	   		if($.trim(this.value).length > 0 && $.trim(view.fields.username.value).length){
+				login.fireEvent('click', {});
+				this.blur();
+	    	} 
+	    }); 
+	}else{
+		view.fields.username.addEventListener('return', function(e) {
+	    	if($.trim(this.value).length > 0){
+	    		 view.fields.password.focus();
+	    	}
+	    });
+	    view.fields.password.addEventListener('return', function(e) {
+	    	if($.trim(this.value).length > 0){
+				login.fireEvent('click', {});
+				this.blur();
+	    	} 
+	    });
+	    view.fields.username.addEventListener('focus', function(e) {
+	        scrollView.scrollTo(0, 40);
+	    });
+	   	view.fields.password.addEventListener('focus', function(e) {
+	   		scrollView.scrollTo(0, 40);  
+		});
+	}   
+	
+    view.fields.status = Titanium.UI.createLabel({
         text: "",
         left: 8,
         right: 8,
         height: StatusNet.Platform.isAndroid() ? 'auto' : 32
     });
     
-    workArea.add(this.fields.status);
+    workArea.add(view.fields.status);
 
     var login = Titanium.UI.createButton({
    		title: "登陆",
@@ -551,6 +684,10 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
 
     login.addEventListener('click', function() {
         StatusNet.debug('clicked login');
+        
+        view.fields.username.blur();
+        view.fields.password.blur();
+
         login.enabled = false;
         register.enabled = false;
         forget.enabled = false;
@@ -561,10 +698,11 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
       			view.verifyAccount(function() {
               StatusNet.debug('login click: updated');
               if (view.workAcct != null) {
-                  // @fixme separate the 'update state' and 'login' actions better
-                  view.saveNewAccount();
-                  view.client.switchAccount(view.workAcct);
-                  doClose();
+				// @fixme separate the 'update state' and 'login' actions better
+				view.saveNewAccount();
+				view.client.switchAccount(view.workAcct);
+				view.prepWin.hide();
+				doClose();	
               }
             },
             function() {
@@ -609,6 +747,9 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
     register.addEventListener('click', function() {
         StatusNet.debug('clicked register');
         view.showRegister(false);
+        if(StatusNet.Platform.isAndroid()){
+         	StatusNet.Platform.animatedClose(window);
+        }
     });
     
     var forget = Titanium.UI.createButton({
@@ -622,13 +763,16 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
 
     forget.addEventListener('click', function() {
         StatusNet.debug('clicked forget');
-        view.showRegister(false);
+        view.showRegister(false);  
+        if(StatusNet.Platform.isAndroid()){
+        	StatusNet.Platform.animatedClose(window);
+        }       
     });
     
     workArea.add(login);
     workArea.add(register);
     workArea.add(forget);
-
+    
     StatusNet.Platform.animatedOpen(window);
 };
 
@@ -929,6 +1073,7 @@ StatusNet.SettingsView.prototype.register = function(view) {
     StatusNet.HttpClientPPT.send(url,function(status, responseObj, responseText){
     	StatusNet.debug("####ppt register response:" + responseText);
     	view.nickname = responseObj.nickname ;
+    	view.username = responseObj.username ;
     	StatusNet.debug("####ppt register this.nickname:" + view.nickname);
     	view.fields.username.value = view.rfields.username.value ;
     	view.fields.password.value = view.rfields.password.value ;
@@ -936,20 +1081,41 @@ StatusNet.SettingsView.prototype.register = function(view) {
         StatusNet.debug('login click: updated');
         if (view.workAcct != null) {
             // @fixme separate the 'update state' and 'login' actions better
+            view.prepWin.hide();
             view.saveNewAccount();
             view.client.switchAccount(view.workAcct);
             //view.doClose();
+            
             if(view.lwindow != null)
             	StatusNet.Platform.animatedClose(view.lwindow);
           	if(view.rwindow != null)
             	StatusNet.Platform.animatedClose(view.rwindow);
             
         }
-        this.enableFields() ;
+        view.enableFields();
      	});
     },function(status, responseObj, responseText){
     	StatusNet.debug("####ppt status:" + status);
-    	this.enableFields() ;
+		var error_message = "" ;
+    	switch(status){
+    		case 401:
+    			error_message = "参数有误";
+    			break ;
+    		case 402:
+    			error_message = "未授权"; 
+    			break ;
+    		case 403:
+    			error_message = "注册失败！密码设置错误或验证码错误！" ;
+    		default :
+    			error_message = "注册失败！密码设置错误或验证码错误！" ;
+    	}
+    	var errDialog = Titanium.UI.createAlertDialog({
+          title: '警告',
+          message: error_message,
+          buttonNames: ['确认']
+      	});
+     	errDialog.show();
+    	view.enableFields() ;    
     },params) ;
 };
 

@@ -219,7 +219,7 @@ StatusNet.Timeline.prototype.getFeedFormatFromURL = function(url) {
             format = STATUSNET_FORMAT_ATOM;
             break;
         default:
-            format = STATUSNET_FORMAT_ATOM;
+            format = STATUSNET_FORMAT_ASJSON;
             break;
 
     }
@@ -241,7 +241,8 @@ StatusNet.Timeline.prototype.update = function(onFinish, customUrl) {
     StatusNet.debug('Timeline.update called updateStart.notify');
 
     var url = (customUrl) ? customUrl : this.getUrl();
-    //var url = "http://www.baidu.com/";
+    
+    StatusNet.debug('Timeline.update called updateStart.notify url: ' + url);
 
     var feed_format = this.getFeedFormatFromURL(url);
 
@@ -565,15 +566,19 @@ StatusNet.TimelineMentions.prototype = heir(StatusNet.Timeline.prototype);
 /**
  * Constructor for public timeline model
  */
-StatusNet.TimelinePublic = function(client) {
+StatusNet.TimelinePublic = function(client, selected) {
     StatusNet.Timeline.call(this, client);
 
     this.timeline_name = 'public';
 
     this._url = 'statuses/public_timeline.as';
-
+    
+    if(selected != undefined && selected != null && selected != ""){
+      this._url = this._url + "&template=" + selected ;
+    }
+    
+    StatusNet.debug("####ppt TimelinePublic url" + this._url);
 };
-
 // Make StatusNet.TimelinePublic inherit Timeline's prototype
 StatusNet.TimelinePublic.prototype = heir(StatusNet.Timeline.prototype);
 

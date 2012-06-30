@@ -247,8 +247,9 @@ StatusNet.Platform.prepAnimation = function(dir) {
 
 StatusNet.Platform.animatedOpen = function(window, dir, target) {
 
-    window.close();
     if (StatusNet.Platform.isApple()) {
+    	window.close();
+    	
         target = target || window;
         var states = StatusNet.Platform.prepAnimation(dir || 'up');
         target.transform = states.start;

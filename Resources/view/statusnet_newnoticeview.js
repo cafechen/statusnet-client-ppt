@@ -119,7 +119,8 @@ StatusNet.NewNoticeView.prototype.init = function() {
     });
 
     var cancelButton = this.cancelButton = Titanium.UI.createButton({
-        title: '取消'
+        title: '取消',
+        width:'120dp'
     });
     cancelButton.addEventListener('click', function() {
         that.close();
@@ -128,13 +129,21 @@ StatusNet.NewNoticeView.prototype.init = function() {
 
     var sendButton = this.sendButton = Titanium.UI.createButton({
         title: "发送",
+        width:'120dp',
         enabled: true // gray it out until there's some text!
     });
-    sendButton.addEventListener('click', function() {
-    		if(that.noticeTextArea.value.trim() == ""){
-    			alert('发送内容不能为空！');
-        	return;
-    		}
+    sendButton.addEventListener('click', function() {    		
+		if(that.noticeTextArea.value.trim() == ""){
+			if (StatusNet.Platform.isApple()) {
+				alert('发送内容不能为空！');
+			}else{
+				Ti.UI.createNotification({
+		       		message : '发送内容不能为空!',
+		        	duration : Ti.UI.NOTIFICATION_DURATION_LONG
+		    	}).show();
+			}
+	    	return;
+		}
         that.postNotice(that.noticeTextArea.value);
     });
 
@@ -284,16 +293,16 @@ StatusNet.NewNoticeView.prototype.addAttachmentControls = function(controlStrip)
         title: '附件...',
         top: 0,
         left: 0,
-        width: 80,
-        height: controlStrip.height
+        width: 90,
+        height: parseInt(controlStrip.height) < 40 ? '25dp' : controlStrip.height
     });
     
     var tplButton = this.tplButton = Titanium.UI.createButton({
         title: '模版',
         top: 0,
         left: 140,
-        width: 60,
-        height: controlStrip.height
+        width: 90,
+        height: parseInt(controlStrip.height) < 40 ? '25dp' : controlStrip.height
     });
 
     attachButton.addEventListener('click', function() {
