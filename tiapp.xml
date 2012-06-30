@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ti:app xmlns:ti="http://ti.appcelerator.org">
-    <sdk-version>1.7.0.RC1</sdk-version>
+    <sdk-version>2.0.2.GA</sdk-version>
     <deployment-targets>
         <target device="mobileweb">true</target>
         <target device="blackberry">false</target>
@@ -8,12 +8,12 @@
         <target device="ipad">true</target>
         <target device="android">true</target>
     </deployment-targets>
-    <id>com.pengpengtou.publish</id>
+    <id>com.pengpengtou.zhanbao</id>
     <name>pengpengtou</name>
     <version>1.0.0</version>
     <publisher>Beijing Tech-Leap Information Technology Co. Ltd.</publisher>
     <url>http://www.pengpengtou.com/</url>
-    <description>碰碰头</description>
+    <description>福将战报</description>
     <copyright>Beijing Tech-Leap Information Technology Co. Ltd.</copyright>
     <icon>appicon@2x.png</icon>
     <persistent-wifi>false</persistent-wifi>

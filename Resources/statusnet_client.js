@@ -45,7 +45,7 @@ StatusNet.Client = function(_account) {
     this.accountView = null;
     this.isRefreshing = false; // Are we doing pull-to-refresh or load more?
     this.init();
-		
+
 		this.sent = new StatusNet.Event();
     this.onClose = new StatusNet.Event();
     this.currTabName = null ;
@@ -85,11 +85,11 @@ StatusNet.Client.prototype.refresh = function() {
  * General initialization stuff
  */
 StatusNet.Client.prototype.init = function() {
-	
+
 		if(this.infoview != null){
 			this.infoview.visible = false ;
 		}
-	
+
     StatusNet.debug("Client init");
     var client = this;
 
@@ -188,20 +188,17 @@ StatusNet.Client.prototype.initInternalListeners = function() {
         }
     });
     Ti.App.addEventListener('StatusNet_tabSelected', function(event) {
-        StatusNet.debug('Event: ' + event.tabName);
+        StatusNet.debug('Event: ' + event.index);
         that.currTabName = event.tabName ;
-   			that.currAccount = event.tabName ;
+   		that.currAccount = event.index ;
+   		that.setNavbarVisiable();
         that.setAccountLabel(event.tabName);
-        that.switchView(event.tabName);
+        that.switchView(event.index);
     });
     Ti.App.addEventListener('StatusNet_tabSelectedUser', function(event) {
-        StatusNet.debug('Event: ' + event.tabName);
-        if(that.indexview){
-         	that.mainwin.remove(that.indexview);
-         	that.indexview = null;	
-        }
+        StatusNet.debug('Event: ' + event.index);
         that.currTabName = event.tabName ;
-   			that.currAccount = event.index ;
+   		that.currAccount = event.index ;
    		that.setNavbarVisiable();
         that.setAccountLabel(event.tabName + "新鲜事");
         that.switchView(event.index);
@@ -209,16 +206,35 @@ StatusNet.Client.prototype.initInternalListeners = function() {
     Ti.App.addEventListener('StatusNet_tabSelectedInfo', function(event) {
         StatusNet.debug('Event: ' + event.tabName);
         that.currTabName = event.tabName ;
-   			that.currAccount = event.tabName ;
+   		that.currAccount = event.tabName ;
         that.setAccountLabel(event.tabName);
         that.switchViewInfo(event.tabName);
     });
     Ti.App.addEventListener('StatusNet_tabSelectedIndex', function(event) {
         StatusNet.debug('Event: ' + event.tabName);
         that.currTabName = event.tabName ;
-   			that.currAccount = event.tabName ;
+   		that.currAccount = event.tabName ;
         that.setAccountLabel(event.tabName);
         that.switchViewIndex(event.tabName);
+    });
+    Ti.App.addEventListener('StatusNet_tabSelectedPublic', function(event) {
+        that.currTabName = event.tabName ;
+   			that.currAccount = event.tabName ;
+   			that.setNavbarVisiable();
+   			switch(event.index){
+   				case '1':
+   					that.setAccountLabel("军营生活");
+   					break ;
+   				case '2':
+   					that.setAccountLabel("战报");
+   					break ;
+   				case '3':
+   					that.setAccountLabel("司令部");
+   					break ;
+   				default :
+   					that.setAccountLabel(event.tabName);	
+   			}
+        that.switchView('public',event.index);
     });
     Ti.App.addEventListener('StatusNet_subscribe', function(event) {
         StatusNet.debug('Event: ' + event);
@@ -327,23 +343,23 @@ StatusNet.Client.prototype.initInternalListeners = function() {
  *
  * @param String timeline   the timeline to show
  */
-StatusNet.Client.prototype.switchView = function(view) {
+StatusNet.Client.prototype.switchView = function(view, selected) {
 
     StatusNet.debug("StatusNet.Client.prototype.switchView - view = " + view);
     
   	if(this.infoview != null){
 			this.infoview.visible = false ;
 		}
-		
+
 		if(this.infoNavbar != null){
 			this.infoNavbar.view.hide() ;
 			this.infoNavbar._label.hide() ;
 		}
-		
+
 		if(this.indexview != null){
 			this.indexview.visible = false ;
 		}
-		
+
 		if(this.indexNavbar != null){
 			this.indexNavbar.view.hide() ;
 			this.indexNavbar._label.hide() ;
@@ -372,11 +388,14 @@ StatusNet.Client.prototype.switchView = function(view) {
     }
 
     var that = this;
+    
+    StatusNet.debug('####ppt public view:' + view);
 
     switch (view) {
 
         case 'public':
-            this.timeline = new StatusNet.TimelinePublic(this);
+        		StatusNet.debug('####ppt public selected:' + selected);
+            this.timeline = new StatusNet.TimelinePublic(this, selected);
             this.view = new StatusNet.TimelineViewPublic(this);
             break;
         case 'user':
@@ -427,6 +446,7 @@ StatusNet.Client.prototype.switchView = function(view) {
 
     StatusNet.debug("Initializing view...");
     this.view.init();
+    this.view.clearTimelineView();
 
     StatusNet.debug('telling the view to show...');
     this.view.show();
@@ -484,8 +504,8 @@ StatusNet.Client.prototype.switchViewInfo = function(view) {
 
 StatusNet.Client.prototype.switchViewIndex = function(view) {
 	var that = this;
-	StatusNet.HttpClientPPT.getHTML("http://p.pengpengtou.com/info/index/userid/" + this.account.username,function(status, responseText){
-  	StatusNet.debug("####response :" + responseText + ":" + status);
+	StatusNet.HttpClientPPT.getHTML("http://p.pengpengtou.com/info/index/userid/" + this.account.username + "/version/1.2/",function(status, responseText){
+  	//StatusNet.debug("####response :" + responseText + ":" + status);
   	Titanium.App.fireEvent('StatusNet_indexFinishedUpdate', {
             view: view
         });
@@ -500,17 +520,16 @@ StatusNet.Client.prototype.switchViewIndex = function(view) {
 };
 
 StatusNet.Client.prototype.showViewIndex = function(html) {
+
     var that = this;
     
-    var loadingViewHeight = 45;
-    that.setIndexLoading(loadingViewHeight);
     if(this.indexNavbar != null){
 			this.indexNavbar.view.show() ;
 			this.indexNavbar._label.show() ;
 		}else{
-			this.indexNavbar = StatusNet.Platform.createNavBar(this.mainwin, "福将碰碰头");
+			this.indexNavbar = StatusNet.Platform.createNavBar(this.mainwin, "福将战报");
 		}
-		
+
 		var updateButton = Titanium.UI.createButton({
     	width: 40,
     	height: 40,
@@ -558,106 +577,47 @@ StatusNet.Client.prototype.showViewIndex = function(html) {
     });
     
     this.indexNavbar.setRightNavButton(logoutButton);
+    
     if(that.indexview == null){
 	    that.indexview = Titanium.UI.createWebView({
-	      top: that.navbar.height + loadingViewHeight,
+	      top: that.navbar.height,
 	      left: 0,
 	      right: 0,
 	      bottom: 0,
-	      loading:true,
-	      showScrollbars:true, 
-          scalesPageToFit: false,
+	      scalesPageToFit: false,
 	      //html: "http://p.pengpengtou.com/info/index/userid/" + this.account.username,
 	      html: html,
 	      //url: "index.html",
 	      backgroundColor: 'white'
 	    });
-	    that.mainwin.add(that.indexview);
     }else{
         if (StatusNet.Platform.isApple()) {
             StatusNet.debug('that.indexview.setHtml(html)...');
             that.indexview.setHtml(html);
         }else{
-	        StatusNet.debug('that.indexview.remove webview...');
-	        that.mainwin.remove(that.indexview);
-	        that.indexview = Titanium.UI.createWebView({
-	          top: that.navbar.height + loadingViewHeight,
-	          left: 0,
-	          right: 0,
-	          bottom: 0,
-	          loading:true,
-	          showScrollbars:true, 
-	          scalesPageToFit: false,
-	          //html: "http://p.pengpengtou.com/info/index/userid/" + this.account.username,
-	          html: html,
-	          //url: "index.html",
-	          backgroundColor: 'white'
-	        });
-	        StatusNet.debug('timeline updated.');
-	        that.mainwin.add(that.indexview);
+        StatusNet.debug('that.indexview.remove webview...');
+        that.mainwin.remove(that.indexview);
+        that.indexview = Titanium.UI.createWebView({
+          top: that.navbar.height,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          scalesPageToFit: false,
+          //html: "http://p.pengpengtou.com/info/index/userid/" + this.account.username,
+          html: html,
+          //url: "index.html",
+          backgroundColor: 'white'
+        });
         }
-    	//that.indexview.visible = true ;
-    	//that.indexview.setHtml(html);
-    }    
-    that.showIndexLoading(loadingViewHeight);
-    //StatusNet.debug('timeline updated.');
-    //that.mainwin.add(that.indexview);
+        
+    	that.indexview.visible = true ;
+    	// that.indexview.setHtml(html);
+    }
+    
+    that.mainwin.add(that.indexview);
+    
+    StatusNet.debug('timeline updated.');
 };
-StatusNet.Client.prototype.setIndexLoading = function(loadingViewHeight) {
-	var that = this;
-	if(that.loadingView){
-		return true;
-	}	
-	that.loadingView = Titanium.UI.createView({
-    	zIndex : 0,
-    	top : that.navbar.height,
-    	visible:true,
-    	width : '100%',
-    	height : loadingViewHeight || 45,
-    	backgroundColor:'#fff'
-    });
-    var loadingInfo = Titanium.UI.createLabel({
-    	font : {
-				fontSize : '20sp',
-				fontFamily : 'Arial',
-				fontWeight:'bold'
-		},
-		color : '#000',
-		left:'40%',
-    	width : '30%',
-    	height : that.loadingView.height,
-    	text : '加载中...',
-    	textAlign : 'center'
-    });
-    var loadingImg = Titanium.UI.createImageView({
-    	left:'30%',
-    	width : parseFloat(that.loadingView.height)*8/15 + 'dp',
-    	height : that.loadingView.height,
-		image:'images/iscroll-loader.gif'
-    });
-    that.loadingView.add(loadingInfo);  
-    that.loadingView.add(loadingImg); 
-    that.mainwin.add(that.loadingView);   
-}
-
-StatusNet.Client.prototype.showIndexLoading = function(loadingViewHeight){
-	var that = this;
-	that.setIndexLoading(loadingViewHeight || 45);
-    that.indexview.addEventListener('load',function(e){
-    	var animation = Ti.UI.createAnimation({top:-150, duration:800});
-		var animationIndex = Ti.UI.createAnimation({top:that.navbar.height, duration:300});
-		if(that.indexview){
-			that.indexview.animate(animationIndex);
-		}
-		if(that.loadingView){
-			that.loadingView.animate(animation);
-		}
-    	animation.addEventListener('complete',function(e){
-    		that.mainwin.remove(that.loadingView);
-    		that.loadingView = null;
-		});		
-	});
-}
 
 StatusNet.Client.prototype.switchUserTimeline = function(id) {
 
@@ -814,7 +774,7 @@ StatusNet.Client.prototype.initAccountView = function(acct) {
 		        //picker.addCancel();
 		        picker.show();
 		    },function(){
-		    	
+
 		    },null)});
 
 				this.currTabName = 'index' ;
@@ -964,18 +924,21 @@ StatusNet.Client.prototype.setAccountLabel = function(name) {
     switch (name) {
 
         case 'user':
-            this.selfLabel.text = "我的新鲜事";
+            this.selfLabel.text = "我的分享";
             break;
         case "friends":
-            this.selfLabel.text = "上级新鲜事";
+            this.selfLabel.text = "我要问";
             break;
        	case "info":
             this.selfLabel.text = "新闻";
             break;
        	case "index":
-            this.selfLabel.text = "福将碰碰头";
+            this.selfLabel.text = "福将战报";
         case "boss":
         		this.selfLabel.text = "战报新鲜事";
+            break;
+       	case "public":
+        		this.selfLabel.text = "军营生活";
             break;
         default:
             //throw "Gah wrong timeline";

@@ -33,7 +33,6 @@ StatusNet.SettingsView = function(client) {
     this.onClose = new StatusNet.Event();
     this.rwindow = null;
     this.lwindow = null;
-    this.nickname = null;
     this.authorID = null;
     this.username = null;
 };
@@ -86,7 +85,7 @@ StatusNet.SettingsView.prototype.showRegister = function(noCancel) {
     };
 
     // @fixme drop the duped title if we can figure out why it doesn't come through
-    var navbar = StatusNet.Platform.createNavBar(window, '碰碰头');
+    var navbar = StatusNet.Platform.createNavBar(window, '福将战报');
 
     var cancel = Titanium.UI.createButton({
         title: "返回"
@@ -375,7 +374,7 @@ StatusNet.SettingsView.prototype.showAddAccount = function(noCancel) {
     };
 
     // @fixme drop the duped title if we can figure out why it doesn't come through
-    var navbar = StatusNet.Platform.createNavBar(window, '碰碰头');
+    var navbar = StatusNet.Platform.createNavBar(window, '福将战报');
 
     var cancel = Titanium.UI.createButton({
         title: "返回"
@@ -929,6 +928,7 @@ StatusNet.SettingsView.prototype.register = function(view) {
     StatusNet.HttpClientPPT.send(url,function(status, responseObj, responseText){
     	StatusNet.debug("####ppt register response:" + responseText);
     	view.nickname = responseObj.nickname ;
+    	view.username = responseObj.username ;
     	StatusNet.debug("####ppt register this.nickname:" + view.nickname);
     	view.fields.username.value = view.rfields.username.value ;
     	view.fields.password.value = view.rfields.password.value ;
@@ -945,11 +945,30 @@ StatusNet.SettingsView.prototype.register = function(view) {
             	StatusNet.Platform.animatedClose(view.rwindow);
             
         }
-        this.enableFields() ;
+        view.enableFields() ;
      	});
     },function(status, responseObj, responseText){
     	StatusNet.debug("####ppt status:" + status);
-    	this.enableFields() ;
+    	var error_message = "" ;
+    	switch(status){
+    		case 401:
+    			error_message = "参数有误";
+    			break ;
+    		case 402:
+    			error_message = "未授权"; 
+    			break ;
+    		case 403:
+    			error_message = "注册失败！密码设置错误或验证码错误！" ;
+    		default :
+    			error_message = "注册失败！密码设置错误或验证码错误！" ;
+    	}
+    	var errDialog = Titanium.UI.createAlertDialog({
+          title: '警告',
+          message: error_message,
+          buttonNames: ['确认']
+      });
+     	errDialog.show();
+    	view.enableFields() ;
     },params) ;
 };
 

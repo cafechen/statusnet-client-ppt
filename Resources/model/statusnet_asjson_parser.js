@@ -132,7 +132,7 @@ StatusNet.ASJsonParser.backgroundParse = function(json, onEntry, onSuccess, onFa
  */
 StatusNet.ASJsonParser.parse = function(jsonstring, onEntry, onSuccess, onFail) {
     
-    StatusNet.debug('StatusNet.ASJsonParser.parse entered!');
+    StatusNet.debug('StatusNet.ASJsonParser.parse entered!' + jsonstring);
 
     var notice = null;
 
@@ -195,15 +195,15 @@ StatusNet.ASJsonParser.noticeFromEntry = function(entry) {
     notice.updated   = entry.postedTime.substring(0, 19);
     notice.title     = entry.title;
     notice.content   = entry.body;
+    notice.attactment = entry.object.attachedObjects;
+    
+    Titanium.API.debug("####ppt debug: entry.body:" + JSON.stringify(entry.body));
+    
     /* add image show */
-   	if(notice.content.indexOf("jpeg") > 0){
-    	var begin = notice.content.indexOf("title=\"") + 7;
-    	var end = notice.content.indexOf("jpeg\"") + 4;
-    	var image = notice.content.substring(begin, end);
-    	Titanium.API.debug("####ppt debug: find image:" + image);
-    	notice.content = notice.content + ' <div class="attach_img"><img width="100" height="75" src="' + image + '" alt=""></div>'
-    	//<div class="attach_img"><img></div>
+   	if(notice.attactment != null && notice.attactment[0] != null){
+    	notice.content = notice.content + ' <div class="attach_img"><img width="100" height="75" src="' + notice.attactment[0]['id'] + '" alt=""></div>'
     }
+    /*
     if(notice.content.indexOf("png") > 0){
     	var begin = notice.content.indexOf("title=\"") + 7;
     	var end = notice.content.indexOf("png\"") + 3;
@@ -212,6 +212,7 @@ StatusNet.ASJsonParser.noticeFromEntry = function(entry) {
     	notice.content = notice.content + ' <div class="attach_img"><img width="100" height="75" src="' + image + '" alt=""></div>'
     	//<div class="attach_img"><img></div>
     }
+    */
     notice.nickname  = entry.actor.contact.preferredUsername;
     notice.author    = entry.actor.contact.preferredUsername;
     notice.authorUri = entry.actor.url;

@@ -133,7 +133,7 @@ StatusNet.TimelineView.prototype.close = function() {
 StatusNet.TimelineView.prototype.show = function() {
     this.showHeader();
     this.clearTimelineView();
-    this.client.timeline.loadCachedNotices();
+    //this.client.timeline.loadCachedNotices();
 };
 
 StatusNet.TimelineView.prototype.clearTimelineView = function(html) {
